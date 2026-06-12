@@ -1,0 +1,30 @@
+# nfpm config — static Cockpit plugin, no build step.
+# Usage: VERSION=1.0.0 nfpm package -f nfpm.yaml -p deb -t out/
+name: cockpit-aryaos
+arch: all
+platform: linux
+version: ${VERSION}
+release: "1"
+section: web
+priority: optional
+maintainer: "Sensors & Signals LLC <oss@snstac.com>"
+vendor: "Sensors & Signals LLC"
+homepage: https://github.com/snstac/cockpit-aryaos
+license: Apache-2.0
+description: |
+  Cockpit web console plugin for AryaOS site-wide TAK administration:
+  site COT_URL, TAK TLS certificates, sensor fleet control.
+
+depends:
+  - cockpit-bridge
+
+
+contents:
+  - src: ./aryaos.css
+    dst: /usr/share/cockpit/aryaos/aryaos.css
+  - src: ./aryaos.js
+    dst: /usr/share/cockpit/aryaos/aryaos.js
+  - src: ./index.html
+    dst: /usr/share/cockpit/aryaos/index.html
+  - src: ./manifest.json
+    dst: /usr/share/cockpit/aryaos/manifest.json
