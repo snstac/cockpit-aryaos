@@ -8,6 +8,7 @@
   --aos-border: rgba(21, 48, 47, 0.18);
   --aos-accent: #1f6f62;
   --aos-accent-dark: #164d45;
+  --aos-accent-ink: #f2fff8;
   --aos-danger: #b42318;
   --aos-ok: #257a4a;
 }
@@ -72,6 +73,7 @@ body {
   padding: 0.55rem 0.65rem;
   border: 1px solid rgba(21, 48, 47, 0.35);
   border-radius: 5px;
+  background: #fbfdfc;
   color: var(--aos-ink);
   font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-weight: 400;
@@ -102,7 +104,7 @@ body {
   padding: 0.5rem 1rem;
   border: 1px solid var(--aos-accent);
   border-radius: 5px;
-  background: #fff;
+  background: #fbfdfc;
   color: var(--aos-accent-dark);
   cursor: pointer;
   font-weight: 650;
@@ -110,7 +112,7 @@ body {
 
 .aos-btn.aos-primary {
   background: var(--aos-accent);
-  color: #fff;
+  color: var(--aos-accent-ink);
 }
 
 .aos-btn:disabled {
