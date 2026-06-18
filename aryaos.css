@@ -1,24 +1,181 @@
 /* AryaOS Site cockpit plugin. SPDX-License-Identifier: Apache-2.0 */
-body { font-family: "RedHatText", "Open Sans", Helvetica, Arial, sans-serif; margin: 0; background: #f2f2f2; }
-.aos-main { max-width: 56rem; margin: 0 auto; padding: 1rem 1.5rem 3rem; }
-.aos-sub { color: #4d5258; }
-.aos-card { background: #fff; border: 1px solid #d2d2d2; border-radius: 6px; padding: 1rem 1.25rem; margin: 1rem 0; }
-.aos-card h2 { margin-top: 0; font-size: 1.1rem; }
-.aos-card label { display: block; margin: 0.6rem 0; font-weight: 600; }
-.aos-card input[type="text"], .aos-card select, .aos-card textarea {
-  display: block; width: 100%; box-sizing: border-box; margin-top: 0.25rem;
-  font-weight: 400; font-family: monospace; padding: 0.4rem; border: 1px solid #8a8d90; border-radius: 3px; }
-.aos-row { display: flex; flex-wrap: wrap; gap: 1rem; }
-.aos-row label { flex: 1 1 14rem; }
-.aos-check { font-weight: 400 !important; }
-.aos-hint { color: #4d5258; font-size: 0.85rem; }
-.aos-btn { padding: 0.45rem 1rem; border-radius: 3px; border: 1px solid #06c; background: #fff; color: #06c; cursor: pointer; }
-.aos-btn.aos-primary { background: #06c; color: #fff; }
-.aos-btn:disabled { opacity: 0.5; cursor: default; }
-.aos-actions { margin: 1.25rem 0; display: flex; gap: 0.75rem; align-items: center; }
-.aos-status { font-size: 0.9rem; }
-.aos-status.ok { color: #3e8635; } .aos-status.err { color: #c9190b; }
-.aos-table { width: 100%; border-collapse: collapse; }
-.aos-table td { padding: 0.3rem 0.5rem; border-bottom: 1px solid #ededed; font-family: monospace; }
-.aos-dot { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; margin-right: 0.4rem; }
-.aos-dot.active { background: #3e8635; } .aos-dot.inactive { background: #c9190b; } .aos-dot.unknown { background: #8a8d90; }
+:root {
+  color-scheme: light;
+  --aos-bg: #eef1f0;
+  --aos-panel: #ffffff;
+  --aos-ink: #122322;
+  --aos-muted: #53615f;
+  --aos-border: rgba(21, 48, 47, 0.18);
+  --aos-accent: #1f6f62;
+  --aos-accent-dark: #164d45;
+  --aos-danger: #b42318;
+  --aos-ok: #257a4a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(180deg, rgba(12, 31, 31, 0.08), rgba(12, 31, 31, 0) 18rem),
+    var(--aos-bg);
+  color: var(--aos-ink);
+  font-family: "RedHatText", "Open Sans", Helvetica, Arial, sans-serif;
+}
+
+.aos-main {
+  width: min(100%, 62rem);
+  margin: 0 auto;
+  padding: clamp(1rem, 2vw, 1.75rem) clamp(1rem, 3vw, 2rem) 3rem;
+}
+
+.aos-main h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.6rem, 4vw, 2.3rem);
+  line-height: 1.1;
+}
+
+.aos-sub {
+  max-width: 56rem;
+  color: var(--aos-muted);
+  line-height: 1.55;
+}
+
+.aos-card {
+  margin: 1rem 0;
+  padding: clamp(1rem, 2vw, 1.3rem);
+  background: var(--aos-panel);
+  border: 1px solid var(--aos-border);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(14, 29, 31, 0.08);
+}
+
+.aos-card h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.aos-card label {
+  display: block;
+  margin: 0.75rem 0;
+  font-weight: 650;
+}
+
+.aos-card input[type="text"],
+.aos-card select,
+.aos-card textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(21, 48, 47, 0.35);
+  border-radius: 5px;
+  color: var(--aos-ink);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-weight: 400;
+}
+
+.aos-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.aos-row label {
+  flex: 1 1 15rem;
+}
+
+.aos-check {
+  font-weight: 400 !important;
+}
+
+.aos-hint {
+  color: var(--aos-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.aos-btn {
+  min-height: 2.25rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--aos-accent);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--aos-accent-dark);
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.aos-btn.aos-primary {
+  background: var(--aos-accent);
+  color: #fff;
+}
+
+.aos-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.aos-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 1.25rem 0;
+}
+
+.aos-status {
+  font-size: 0.9rem;
+}
+
+.aos-status.ok {
+  color: var(--aos-ok);
+}
+
+.aos-status.err {
+  color: var(--aos-danger);
+}
+
+.aos-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.aos-table td {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid rgba(21, 48, 47, 0.12);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  overflow-wrap: anywhere;
+}
+
+.aos-dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+}
+
+.aos-dot.active {
+  background: var(--aos-ok);
+}
+
+.aos-dot.inactive {
+  background: var(--aos-danger);
+}
+
+.aos-dot.unknown {
+  background: #7c8784;
+}
+
+@media (max-width: 680px) {
+  .aos-card {
+    margin-inline: -0.25rem;
+  }
+
+  .aos-actions .aos-btn {
+    flex: 1 1 12rem;
+  }
+}
