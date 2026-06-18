@@ -1,16 +1,17 @@
 /* AryaOS Site cockpit plugin. SPDX-License-Identifier: Apache-2.0 */
 :root {
-  color-scheme: light;
-  --aos-bg: #eef1f0;
-  --aos-panel: #ffffff;
-  --aos-ink: #122322;
-  --aos-muted: #53615f;
-  --aos-border: rgba(21, 48, 47, 0.18);
-  --aos-accent: #1f6f62;
-  --aos-accent-dark: #164d45;
-  --aos-accent-ink: #f2fff8;
-  --aos-danger: #b42318;
-  --aos-ok: #257a4a;
+  color-scheme: dark;
+  --aos-bg: #071211;
+  --aos-panel: #122322;
+  --aos-panel-2: #172c2a;
+  --aos-ink: #edf7f4;
+  --aos-muted: #9bb2ad;
+  --aos-border: rgba(124, 170, 160, 0.28);
+  --aos-accent: #35a58f;
+  --aos-accent-dark: #6ed4be;
+  --aos-accent-ink: #071211;
+  --aos-danger: #ff8a7a;
+  --aos-ok: #74d8a4;
 }
 
 * {
@@ -20,7 +21,7 @@
 body {
   margin: 0;
   background:
-    linear-gradient(180deg, rgba(12, 31, 31, 0.08), rgba(12, 31, 31, 0) 18rem),
+    linear-gradient(180deg, rgba(53, 165, 143, 0.16), rgba(7, 18, 17, 0) 18rem),
     var(--aos-bg);
   color: var(--aos-ink);
   font-family: "RedHatText", "Open Sans", Helvetica, Arial, sans-serif;
@@ -50,7 +51,7 @@ body {
   background: var(--aos-panel);
   border: 1px solid var(--aos-border);
   border-radius: 8px;
-  box-shadow: 0 10px 28px rgba(14, 29, 31, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
 }
 
 .aos-card h2 {
@@ -71,9 +72,9 @@ body {
   width: 100%;
   margin-top: 0.35rem;
   padding: 0.55rem 0.65rem;
-  border: 1px solid rgba(21, 48, 47, 0.35);
+  border: 1px solid rgba(124, 170, 160, 0.38);
   border-radius: 5px;
-  background: #fbfdfc;
+  background: var(--aos-panel-2);
   color: var(--aos-ink);
   font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-weight: 400;
@@ -104,7 +105,7 @@ body {
   padding: 0.5rem 1rem;
   border: 1px solid var(--aos-accent);
   border-radius: 5px;
-  background: #fbfdfc;
+  background: var(--aos-panel-2);
   color: var(--aos-accent-dark);
   cursor: pointer;
   font-weight: 650;
@@ -147,7 +148,7 @@ body {
 
 .aos-table td {
   padding: 0.45rem 0.5rem;
-  border-bottom: 1px solid rgba(21, 48, 47, 0.12);
+  border-bottom: 1px solid rgba(124, 170, 160, 0.18);
   font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   overflow-wrap: anywhere;
 }
