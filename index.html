@@ -58,6 +58,26 @@ SPDX-License-Identifier: Apache-2.0
       <div id="tls-current" class="aos-hint"></div>
     </section>
 
+    <section class="aos-card" id="card-dp">
+      <h2>TAK connection</h2>
+      <p class="aos-hint">Import an ATAK/iTAK connection data package or paste a one-time TAK Server enrollment URL. AryaOS installs the certs under <code>/etc/aryaos/tls</code> and enables Charontak forwarding to the TAK Server.</p>
+      <table class="aos-table aos-status-table" id="tak-enrollment-table"><tbody></tbody></table>
+      <div class="aos-upload-row">
+        <label class="aos-file-label">One-time enrollment URL
+          <textarea id="dp-enrollment-url" rows="3" placeholder="tak://com.atakmap.app/enroll?host=...&amp;username=...&amp;token=..."></textarea>
+        </label>
+        <button class="aos-btn" id="btn-enrollment-import">Enroll</button>
+      </div>
+      <div class="aos-upload-row">
+        <label class="aos-file-label">Connection package (.zip / .dpk)
+          <input type="file" id="dp-file" accept=".zip,.dpk,application/zip,application/octet-stream">
+        </label>
+        <button class="aos-btn" id="btn-dp-upload">Import package</button>
+        <button class="aos-btn" id="btn-tak-refresh">Refresh status</button>
+      </div>
+      <span id="dp-status" class="aos-status"></span>
+    </section>
+
     <section class="aos-card" id="card-services">
       <h2>Sensor services</h2>
       <table class="aos-table" id="svc-table"><tbody></tbody></table>

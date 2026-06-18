@@ -160,6 +160,135 @@ function showCurrentTls() {
         .catch(() => { $("tls-current").textContent = ""; });
 }
 
+/* --- TAK connection import and enrollment status --- */
+function renderTakEnrollmentStatus(payload) {
+    const tbody = $("tak-enrollment-table").querySelector("tbody");
+    const status = payload && payload.enrollment_status ? payload.enrollment_status : {};
+    const bool = (value) => value ? "yes" : "no";
+    const configured = Boolean(status.configured);
+    const serviceReady = Boolean(status.import_service_ready);
+    const rows = [
+        ["Enrollment", configured ? "configured" : "not configured"],
+        ["Import service", serviceReady ? "ready" : "not ready"],
+        ["TAK target", status.cot_url || "not set"],
+        ["TLS material", [
+            "cert " + bool(status.tls && status.tls.client_cert),
+            "key " + bool(status.tls && status.tls.client_key),
+            "CA " + bool(status.tls && status.tls.ca),
+        ].join(", ")],
+    ];
+    if (status.last_updated) rows.push(["Last updated", status.last_updated]);
+    if (status.detail) rows.push(["Detail", status.detail]);
+    tbody.innerHTML = "";
+    rows.forEach(([name, value], idx) => {
+        const tr = document.createElement("tr");
+        const tdName = document.createElement("td");
+        const dot = document.createElement("span");
+        if (idx === 0) dot.className = "aos-dot " + (configured ? "active" : "inactive");
+        else if (idx === 1) dot.className = "aos-dot " + (serviceReady ? "active" : "unknown");
+        else dot.className = "aos-dot unknown";
+        tdName.appendChild(dot);
+        tdName.appendChild(document.createTextNode(name));
+        const tdValue = document.createElement("td");
+        tdValue.textContent = value;
+        tr.appendChild(tdName);
+        tr.appendChild(tdValue);
+        tbody.appendChild(tr);
+    });
+}
+
+function refreshTakEnrollmentStatus() {
+    return fetch("/cgi-bin/aryaos-tak-dp-upload", {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+    })
+        .then((r) => r.json().then((payload) => {
+            if (!r.ok || !payload.ok) throw new Error(payload.error || ("HTTP " + r.status));
+            return payload;
+        }))
+        .then(renderTakEnrollmentStatus)
+        .catch((ex) => {
+            renderTakEnrollmentStatus({
+                enrollment_status: {
+                    configured: false,
+                    import_service_ready: false,
+                    detail: ex.message || String(ex),
+                    tls: {},
+                },
+            });
+        });
+}
+
+function importDataPackage() {
+    const el = $("dp-status");
+    const fileInput = $("dp-file");
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) {
+        setStatus(el, "Choose a .zip or .dpk connection package first.", false);
+        return;
+    }
+    const body = new FormData();
+    body.append("package", file);
+    el.textContent = "Importing package...";
+    el.className = "aos-status";
+    fetch("/cgi-bin/aryaos-tak-dp-upload", {
+        method: "POST",
+        body,
+        credentials: "same-origin",
+        cache: "no-store",
+    })
+        .then((r) => r.json().then((payload) => {
+            if (!r.ok || !payload.ok) throw new Error(payload.error || ("HTTP " + r.status));
+            return payload;
+        }))
+        .then((payload) => {
+            const target = payload.cot_url || "TAK Server";
+            setStatus(el, "Imported " + target + "; Charontak forwarding updated.", true);
+            showCurrentTls();
+            refreshServices();
+            refreshTakEnrollmentStatus();
+        })
+        .catch((ex) => setStatus(el, "Import failed: " + (ex.message || ex), false));
+}
+
+function importEnrollmentUrl() {
+    const el = $("dp-status");
+    const input = $("dp-enrollment-url");
+    const enrollmentUrl = input && input.value ? input.value.trim() : "";
+    if (!enrollmentUrl) {
+        setStatus(el, "Paste a tak:// enrollment URL first.", false);
+        return;
+    }
+    if (!/^tak:\/\//i.test(enrollmentUrl)) {
+        setStatus(el, "Enrollment URL must start with tak://.", false);
+        return;
+    }
+    const body = new FormData();
+    body.append("enrollment_url", enrollmentUrl);
+    el.textContent = "Enrolling...";
+    el.className = "aos-status";
+    fetch("/cgi-bin/aryaos-tak-dp-upload", {
+        method: "POST",
+        body,
+        credentials: "same-origin",
+        cache: "no-store",
+    })
+        .then((r) => r.json().then((payload) => {
+            if (!r.ok || !payload.ok) throw new Error(payload.error || ("HTTP " + r.status));
+            return payload;
+        }))
+        .then((payload) => {
+            const target = payload.cot_url || "TAK Server";
+            setStatus(el, "Enrolled " + target + "; Charontak forwarding updated.", true);
+            input.value = "";
+            showCurrentTls();
+            refreshServices();
+            refreshTakEnrollmentStatus();
+        })
+        .catch((ex) => setStatus(el, "Enrollment failed: " + (ex.message || ex), false));
+}
+
 /* --- Services card --- */
 function refreshServices() {
     const units = serviceList(configText);
@@ -192,7 +321,11 @@ configFile.watch((content) => {
     renderForm(configText);
     refreshServices();
     showCurrentTls();
+    refreshTakEnrollmentStatus();
 });
 $("btn-save").addEventListener("click", () => saveConfig(true));
 $("btn-save-only").addEventListener("click", () => saveConfig(false));
 $("btn-tls-upload").addEventListener("click", installTls);
+$("btn-dp-upload").addEventListener("click", importDataPackage);
+$("btn-enrollment-import").addEventListener("click", importEnrollmentUrl);
+$("btn-tak-refresh").addEventListener("click", refreshTakEnrollmentStatus);

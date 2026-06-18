@@ -153,6 +153,41 @@ body {
   overflow-wrap: anywhere;
 }
 
+.aos-status-table {
+  margin: 0.7rem 0 1rem;
+}
+
+.aos-status-table td:first-child {
+  width: 12rem;
+  color: var(--aos-muted);
+}
+
+.aos-upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.aos-file-label {
+  flex: 1 1 18rem;
+}
+
+.aos-file-label input[type="file"] {
+  display: block;
+  margin-top: 0.3rem;
+  font-weight: 400;
+}
+
+.aos-file-label textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 0.3rem;
+  font: inherit;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
 .aos-dot {
   display: inline-block;
   width: 0.7rem;
