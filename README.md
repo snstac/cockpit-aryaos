@@ -5,7 +5,9 @@ The [Cockpit](https://cockpit-project.org/) **"AryaOS Site"** plugin for
 fleet inherits. Set the **site COT_URL**, choose the ADS-B decoder, and **upload
 site-wide TAK TLS certificates once** (`PYTAK_TLS_CLIENT_CERT/KEY/CAFILE` in
 `/etc/aryaos/aryaos-config.txt`, inherited by every PyTAK gateway) — then restart the
-sensor fleet with one click. Per-tool tweaks live in each gateway's own Cockpit plugin.
+sensor fleet with one click. The page also shows nearby AryaOS nodes heard over Mesh SA,
+including roles, health, position status, and admin links. Per-tool tweaks live in each
+gateway's own Cockpit plugin.
 
 ## Install
 

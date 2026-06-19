@@ -83,6 +83,30 @@ SPDX-License-Identifier: Apache-2.0
       <table class="aos-table" id="svc-table"><tbody></tbody></table>
     </section>
 
+    <section class="aos-card" id="card-neighbors">
+      <div class="aos-section-head">
+        <h2>Nearby AryaOS nodes</h2>
+        <button class="aos-icon-btn" id="btn-neighbors-refresh" title="Refresh neighbor list" aria-label="Refresh neighbor list">&#8635;</button>
+      </div>
+      <div class="aos-neighbor-summary" id="neighbors-summary">Listening for AryaOS CoT beacons...</div>
+      <div class="aos-table-scroll">
+        <table class="aos-table aos-neighbor-table" id="neighbors-table">
+          <thead>
+            <tr>
+              <th>Node</th>
+              <th>Roles</th>
+              <th>Health</th>
+              <th>Position</th>
+              <th>Seen</th>
+              <th>Admin</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <span id="neighbors-status" class="aos-status"></span>
+    </section>
+
     <div class="aos-actions">
       <button class="aos-btn aos-primary" id="btn-save">Save &amp; restart sensors</button>
       <button class="aos-btn" id="btn-save-only">Save only</button>

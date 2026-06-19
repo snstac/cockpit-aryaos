@@ -315,6 +315,121 @@ function refreshServices() {
     });
 }
 
+/* --- AryaOS neighbor discovery --- */
+function truthy(value) {
+    return value === true || value === "true" || value === "1" || value === 1;
+}
+
+function fmtAge(seconds) {
+    const n = Number(seconds);
+    if (!Number.isFinite(n) || n < 0) return "-";
+    if (n < 60) return Math.round(n) + "s";
+    if (n < 3600) return Math.round(n / 60) + "m";
+    return Math.round(n / 3600) + "h";
+}
+
+function fmtNum(value, digits) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return null;
+    return n.toFixed(digits);
+}
+
+function roleText(roles) {
+    const out = [];
+    if (truthy(roles && roles.adsb)) out.push("ADS-B");
+    if (truthy(roles && roles.ais)) out.push("AIS");
+    if (truthy(roles && roles.uas)) out.push("UAS");
+    return out.length ? out.join(" / ") : "base";
+}
+
+function healthText(item) {
+    const sys = item.system || {};
+    const svc = item.services || {};
+    const parts = [];
+    if (sys.load1) parts.push("load " + sys.load1);
+    if (sys.mem_pct) parts.push("mem " + sys.mem_pct + "%");
+    if (sys.temp_c) parts.push(sys.temp_c + " C");
+    const keys = Object.keys(svc);
+    if (keys.length) {
+        const active = keys.filter((k) => svc[k] === "active").length;
+        parts.push(active + "/" + keys.length + " svc");
+    }
+    return parts.join(" | ") || "-";
+}
+
+function positionText(point) {
+    if (!point) return "-";
+    const ce = Number(point.ce);
+    const le = Number(point.le);
+    if (ce >= 999000 || le >= 999000) return "no fix";
+    const lat = fmtNum(point.lat, 4);
+    const lon = fmtNum(point.lon, 4);
+    if (lat === null || lon === null) return "-";
+    return lat + ", " + lon;
+}
+
+function renderNeighbors(payload) {
+    const tbody = $("neighbors-table").querySelector("tbody");
+    const summary = $("neighbors-summary");
+    const status = $("neighbors-status");
+    tbody.innerHTML = "";
+    status.textContent = "";
+    status.className = "aos-status";
+
+    if (!payload || payload.ok === false) {
+        summary.textContent = "Neighbor cache unavailable.";
+        setStatus(status, payload && payload.error ? payload.error : "Could not load neighbors.", false);
+        return;
+    }
+
+    const items = Array.isArray(payload.items) ? payload.items : [];
+    summary.textContent = items.length
+        ? items.length + " node" + (items.length === 1 ? "" : "s") + " heard on Mesh SA"
+        : "Listening for AryaOS CoT beacons...";
+
+    items.forEach((item) => {
+        const host = item.host || {};
+        const tr = document.createElement("tr");
+        [
+            host.name || item.uid || item.source_ip || "-",
+            roleText(item.roles || {}),
+            healthText(item),
+            positionText(item.point || {}),
+            fmtAge(item.age_s),
+        ].forEach((text) => {
+            const td = document.createElement("td");
+            td.textContent = text;
+            tr.appendChild(td);
+        });
+        const td = document.createElement("td");
+        if (host.admin_url) {
+            const a = document.createElement("a");
+            a.href = host.admin_url;
+            a.rel = "noopener noreferrer";
+            a.textContent = "Open";
+            td.appendChild(a);
+        } else {
+            td.textContent = "-";
+        }
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+    });
+}
+
+function refreshNeighbors() {
+    return fetch("/cgi-bin/aryaos-neighbors", {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+    })
+        .then((r) => r.json().then((payload) => {
+            if (!r.ok || payload.ok === false) throw new Error(payload.error || ("HTTP " + r.status));
+            return payload;
+        }))
+        .then(renderNeighbors)
+        .catch((ex) => renderNeighbors({ ok: false, error: ex.message || String(ex) }));
+}
+
 /* --- init --- */
 configFile.watch((content) => {
     configText = content || "";
@@ -322,6 +437,7 @@ configFile.watch((content) => {
     refreshServices();
     showCurrentTls();
     refreshTakEnrollmentStatus();
+    refreshNeighbors();
 });
 $("btn-save").addEventListener("click", () => saveConfig(true));
 $("btn-save-only").addEventListener("click", () => saveConfig(false));
@@ -329,3 +445,5 @@ $("btn-tls-upload").addEventListener("click", installTls);
 $("btn-dp-upload").addEventListener("click", importDataPackage);
 $("btn-enrollment-import").addEventListener("click", importEnrollmentUrl);
 $("btn-tak-refresh").addEventListener("click", refreshTakEnrollmentStatus);
+$("btn-neighbors-refresh").addEventListener("click", refreshNeighbors);
+setInterval(refreshNeighbors, 8000);
