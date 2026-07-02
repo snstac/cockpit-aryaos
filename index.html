@@ -83,6 +83,28 @@ SPDX-License-Identifier: Apache-2.0
       <table class="aos-table" id="svc-table"><tbody></tbody></table>
     </section>
 
+    <section class="aos-card" id="card-updates">
+      <div class="aos-section-head">
+        <h2>Software updates</h2>
+        <span class="aos-hint" id="update-version"></span>
+      </div>
+      <p class="aos-hint">Updates install from the signed Sensors &amp; Signals package
+        repository. Sensor services may restart briefly while updates apply. Debian
+        security fixes are applied automatically every day.</p>
+      <div class="aos-update-summary" id="update-summary">Update state unknown — check for updates.</div>
+      <div class="aos-table-scroll">
+        <table class="aos-table" id="update-table"><tbody></tbody></table>
+      </div>
+      <div class="aos-actions-inline">
+        <button class="aos-btn aos-btn-big" id="btn-update-check">Check for updates</button>
+        <button class="aos-btn aos-primary aos-btn-big" id="btn-update-apply" disabled>Install all updates</button>
+      </div>
+      <span id="update-status" class="aos-status"></span>
+      <pre id="update-log" class="aos-log" hidden></pre>
+      <p class="aos-hint">Advanced per-package operations:
+        <a href="../updates">Software updates (PackageKit)</a>.</p>
+    </section>
+
     <section class="aos-card" id="card-neighbors">
       <div class="aos-section-head">
         <h2>Nearby AryaOS nodes</h2>
