@@ -315,6 +315,175 @@ function refreshServices() {
     });
 }
 
+/* --- Software updates card --- */
+// Preferred path: the aryaos-update helper + oneshot unit shipped by
+// aryaos-overlay >= 2.1 (upgrade survives a closed browser session). Older
+// images fall back to plain apt under a transient systemd unit.
+const UPDATE_HELPER = "/usr/local/sbin/aryaos-update";
+const UPDATE_UNIT = "aryaos-update.service";
+const APT_APPLY_CMD =
+    "DEBIAN_FRONTEND=noninteractive apt-get -y " +
+    "-o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold full-upgrade";
+let updateRunning = false;
+let updatePoller = null;
+
+function updateRow(cells, muted) {
+    const tr = document.createElement("tr");
+    cells.forEach((text) => {
+        const td = document.createElement("td");
+        td.textContent = text;
+        if (muted) td.className = "aos-muted-cell";
+        tr.appendChild(td);
+    });
+    return tr;
+}
+
+function renderUpdateCheck(check) {
+    const tbody = $("update-table").querySelector("tbody");
+    const summary = $("update-summary");
+    tbody.innerHTML = "";
+    if (!check) {
+        summary.textContent = "Update state unknown — check for updates.";
+        $("btn-update-apply").disabled = true;
+        return;
+    }
+    const list = Array.isArray(check.upgradable) ? check.upgradable : [];
+    const when = check.checked_at ? " (checked " + check.checked_at + ")" : "";
+    if (!list.length) {
+        summary.textContent = "Everything is up to date" + when + ".";
+        $("btn-update-apply").disabled = true;
+    } else {
+        summary.textContent = list.length + " update" + (list.length === 1 ? "" : "s") +
+            " available" + when + ".";
+        $("btn-update-apply").disabled = updateRunning;
+    }
+    list.slice(0, 30).forEach((p) => {
+        tbody.appendChild(updateRow([p.name, (p.current || "?") + " → " + (p.candidate || "?")]));
+    });
+    if (list.length > 30)
+        tbody.appendChild(updateRow(["…", (list.length - 30) + " more"], true));
+    if (check.held && check.held.length)
+        tbody.appendChild(updateRow(["held back", check.held.join(", ")], true));
+}
+
+function refreshUpdateStatus() {
+    // status subcommand needs no privileges; absent helper = pre-2.1 image.
+    cockpit.spawn([UPDATE_HELPER, "status"], { err: "message" })
+        .then((out) => {
+            const st = JSON.parse(out);
+            $("update-version").textContent = st.aryaos_version ? "AryaOS " + st.aryaos_version : "";
+            renderUpdateCheck(st.last_check);
+            if (st.reboot_required)
+                $("update-summary").textContent += " Reboot required to finish earlier updates.";
+        })
+        .catch(() => { $("update-version").textContent = ""; });
+}
+
+function parseAptUpgradable(out) {
+    const list = [];
+    out.split("\n").forEach((line) => {
+        if (!line.includes("[upgradable from:")) return;
+        const name = line.split("/", 1)[0];
+        const parts = line.trim().split(/\s+/);
+        const m = line.match(/\[upgradable from: ([^\]]+)\]/);
+        list.push({ name, current: m ? m[1] : "", candidate: parts[1] || "" });
+    });
+    return { count: list.length, upgradable: list, held: [] };
+}
+
+function checkUpdates() {
+    const el = $("update-status");
+    $("btn-update-check").disabled = true;
+    el.textContent = "Refreshing package lists...";
+    el.className = "aos-status";
+    cockpit.spawn([UPDATE_HELPER, "check"], { superuser: "require", err: "message" })
+        .then((out) => {
+            renderUpdateCheck(JSON.parse(out));
+            setStatus(el, "Check complete.", true);
+        })
+        .catch((ex) => {
+            if (ex.problem !== "not-found")
+                throw ex;
+            return cockpit.spawn(
+                ["/bin/sh", "-c", "apt-get -qq update >&2 && apt list --upgradable 2>/dev/null"],
+                { superuser: "require", err: "message" })
+                .then((out) => {
+                    renderUpdateCheck(parseAptUpgradable(out));
+                    setStatus(el, "Check complete.", true);
+                });
+        })
+        .catch((ex) => setStatus(el, "Check failed: " + (ex.message || ex), false))
+        .finally(() => { $("btn-update-check").disabled = false; });
+}
+
+function showUpdateLog(unit) {
+    return cockpit.spawn(
+        ["journalctl", "-u", unit, "--boot", "--no-pager", "-o", "cat", "-n", "400"],
+        { superuser: "try", err: "ignore" })
+        .then((out) => {
+            const log = $("update-log");
+            log.hidden = false;
+            log.textContent = out;
+            log.scrollTop = log.scrollHeight;
+        })
+        .catch(() => { /* journal may be unreadable for this user */ });
+}
+
+function finishApply(el, ok) {
+    if (updatePoller) { clearInterval(updatePoller); updatePoller = null; }
+    updateRunning = false;
+    $("btn-update-check").disabled = false;
+    setStatus(el, ok ? "Updates installed." : "Update run failed — see log below.", ok);
+    refreshUpdateStatus();
+    refreshServices();
+}
+
+function pollApply(unit, el, state) {
+    state.polls += 1;
+    showUpdateLog(unit);
+    cockpit.spawn(["systemctl", "is-active", unit], { err: "ignore" })
+        .then(() => { state.sawRunning = true; })
+        .catch((ex) => {
+            const s = (ex.message || "").trim();
+            if (s === "activating") {
+                state.sawRunning = true;
+            } else if (s === "failed") {
+                finishApply(el, false);
+            } else if (s === "inactive" && (state.sawRunning || state.polls > 10)) {
+                // oneshot finished (or never observed running after ~30s)
+                finishApply(el, true);
+            }
+        });
+}
+
+function applyUpdates() {
+    if (updateRunning) return;
+    const el = $("update-status");
+    updateRunning = true;
+    $("btn-update-apply").disabled = true;
+    $("btn-update-check").disabled = true;
+    el.textContent = "Installing updates (safe to leave this page)...";
+    el.className = "aos-status";
+    cockpit.spawn(["systemctl", "cat", UPDATE_UNIT], { err: "ignore" })
+        .then(() => cockpit.spawn(["systemctl", "start", "--no-block", UPDATE_UNIT],
+            { superuser: "require", err: "message" })
+            .then(() => UPDATE_UNIT))
+        .catch(() => cockpit.spawn(
+            ["systemd-run", "--unit=aryaos-update-run", "--collect", "/bin/sh", "-c", APT_APPLY_CMD],
+            { superuser: "require", err: "message" })
+            .then(() => "aryaos-update-run.service"))
+        .then((unit) => {
+            const state = { polls: 0, sawRunning: false };
+            updatePoller = setInterval(() => pollApply(unit, el, state), 3000);
+        })
+        .catch((ex) => {
+            updateRunning = false;
+            $("btn-update-check").disabled = false;
+            $("btn-update-apply").disabled = false;
+            setStatus(el, "Could not start update: " + (ex.message || ex), false);
+        });
+}
+
 /* --- AryaOS neighbor discovery --- */
 function truthy(value) {
     return value === true || value === "true" || value === "1" || value === 1;
@@ -446,4 +615,7 @@ $("btn-dp-upload").addEventListener("click", importDataPackage);
 $("btn-enrollment-import").addEventListener("click", importEnrollmentUrl);
 $("btn-tak-refresh").addEventListener("click", refreshTakEnrollmentStatus);
 $("btn-neighbors-refresh").addEventListener("click", refreshNeighbors);
+$("btn-update-check").addEventListener("click", checkUpdates);
+$("btn-update-apply").addEventListener("click", applyUpdates);
+refreshUpdateStatus();
 setInterval(refreshNeighbors, 8000);
