@@ -28,7 +28,6 @@ matching Cockpit plugin for browser-based management:
 | Ships & vessels via AIS | [aiscot](https://github.com/snstac/aiscot) | [cockpit-aiscot](https://github.com/snstac/cockpit-aiscot), [cockpit-aiscatcher](https://github.com/snstac/cockpit-aiscatcher) |
 | Drone / UAS Remote ID (counter-UAS) | [dronecot](https://github.com/snstac/dronecot) | [cockpit-dronecot](https://github.com/snstac/cockpit-dronecot) |
 | Own position via GPS/GNSS | [lincot](https://github.com/snstac/lincot) | [cockpit-lincot](https://github.com/snstac/cockpit-lincot), [cockpit-gps](https://github.com/snstac/cockpit-gps) |
-| Radio direction finding (KrakenSDR) | [kraktak](https://github.com/snstac/kraktak) | — |
 | APRS amateur radio | [aprscot](https://github.com/snstac/aprscot) | — |
 | Weather stations | [windtak](https://github.com/snstac/windtak) | — |
 | CoT routing / TAK Server bridging | [charontak](https://github.com/snstac/charontak) | — |

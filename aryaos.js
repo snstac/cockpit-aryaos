@@ -14,7 +14,7 @@ const TLS_DIR = "/etc/aryaos/tls";
 const TLS_GROUP = "tak-certs";
 // Gateways shown in the services card and restarted on save. AOS_SERVICES in
 // the site config wins when set.
-const DEFAULT_SERVICES = ["charontak", "adsbcot", "aiscot", "dronecot", "lincot", "dhbridge", "readsb", "ais-catcher"];
+const DEFAULT_SERVICES = ["charontak", "adsbcot", "aiscot", "dronecot", "lincot", "readsb", "ais-catcher"];
 
 const $ = (id) => document.getElementById(id);
 const configFile = cockpit.file(CONFIG_PATH, { superuser: "try" });
