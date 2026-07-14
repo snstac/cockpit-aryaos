@@ -81,7 +81,7 @@ body {
 .aos-card textarea {
   display: block;
   width: 100%;
-  min-height: 2.75rem;
+  min-height: 3rem;
   margin-top: 0.35rem;
   padding: 0.55rem 0.65rem;
   border: 1px solid rgba(124, 170, 160, 0.38);
@@ -112,10 +112,10 @@ body {
   line-height: 1.5;
 }
 
-/* Touch targets sized for gloved field use (~48px on primary controls). */
+/* Touch targets sized for gloved field use (>=48px on all controls). */
 .aos-btn {
-  min-height: 2.75rem;
-  padding: 0.6rem 1.2rem;
+  min-height: 3rem;
+  padding: 0.7rem 1.2rem;
   font-size: 1rem;
   border: 1px solid var(--aos-accent);
   border-radius: 5px;
@@ -142,8 +142,8 @@ body {
 }
 
 .aos-icon-btn {
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 3rem;
+  height: 3rem;
   border: 1px solid var(--aos-accent);
   border-radius: 5px;
   background: var(--aos-panel-2);
@@ -180,7 +180,7 @@ body {
 
 .aos-table th,
 .aos-table td {
-  padding: 0.45rem 0.5rem;
+  padding: 0.7rem 0.6rem;
   border-bottom: 1px solid rgba(124, 170, 160, 0.18);
   font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   overflow-wrap: anywhere;
@@ -295,7 +295,7 @@ body {
   background: #7c8784;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 760px) {
   .aos-card {
     margin-inline: -0.25rem;
   }
