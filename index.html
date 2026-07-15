@@ -38,6 +38,30 @@ SPDX-License-Identifier: Apache-2.0
       </label>
     </section>
 
+    <section class="aos-card" id="card-radios">
+      <div class="aos-section-head">
+        <h2>Radios (RTL-SDR)</h2>
+        <button class="aos-icon-btn" id="btn-radios-refresh" title="Rescan radios" aria-label="Rescan radios">&#8635;</button>
+      </div>
+      <p class="aos-hint">AryaOS selects dongles by EEPROM serial: <code>stx:1090:0</code> for
+        ADS-B 1090&nbsp;MHz (readsb / dump1090-fa) and <code>stx:978:0</code> for UAT (matches the
+        UAT serial setting above). Writing a serial briefly stops SDR services; <strong>replug the
+        dongle (or reboot)</strong> before the new serial is visible.</p>
+      <datalist id="radio-serials">
+        <option value="stx:1090:0"></option>
+        <option value="stx:978:0"></option>
+      </datalist>
+      <div class="aos-table-scroll">
+        <table class="aos-table" id="radios-table">
+          <thead>
+            <tr><th>#</th><th>Device</th><th>Serial</th><th>New serial</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <span id="radios-status" class="aos-status"></span>
+    </section>
+
     <section class="aos-card" id="card-tls">
       <h2>Site-wide TAK TLS certificates</h2>
       <p class="aos-hint">Upload once; every PyTAK gateway inherits
