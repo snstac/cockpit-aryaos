@@ -599,6 +599,90 @@ function refreshNeighbors() {
         .catch((ex) => renderNeighbors({ ok: false, error: ex.message || String(ex) }));
 }
 
+/* --- Device role card --- */
+let roleData = null;
+
+function renderRoleUnits() {
+    const el = $("role-units");
+    const role = $("role-select").value;
+    if (!roleData || !roleData.roles || !roleData.roles[role]) {
+        el.textContent = "";
+        return;
+    }
+    const units = roleData.roles[role].units;
+    el.textContent = units.length
+        ? "Sensor services for this role: " + units.join(", ")
+        : "No sensor services — CoT routing core only.";
+}
+
+function refreshRole() {
+    cockpit.spawn(["/usr/local/sbin/aryaos-role", "list"], { superuser: "try", err: "message" })
+        .then((out) => {
+            roleData = JSON.parse(out);
+            if (roleData.current && $("role-select").querySelector('[value="' + roleData.current + '"]'))
+                $("role-select").value = roleData.current;
+            renderRoleUnits();
+        })
+        .catch(() => {
+            roleData = null;
+            $("role-units").textContent = "Role helper unavailable (needs aryaos-overlay >= 2.2).";
+        });
+}
+
+function applyRole() {
+    const el = $("role-status");
+    const role = $("role-select").value;
+    if (!window.confirm("Apply role '" + role + "'? Sensor services outside this role stop and are disabled at boot."))
+        return;
+    const btn = $("btn-role-apply");
+    btn.disabled = true;
+    cockpit.spawn(["/usr/local/sbin/aryaos-role", "set", role],
+        { superuser: "require", err: "message" })
+        .then(() => {
+            btn.disabled = false;
+            setStatus(el, "Role applied: " + role + ".", true);
+            refreshRole();
+            refreshServices();
+        })
+        .catch((ex) => {
+            btn.disabled = false;
+            setStatus(el, "Failed: " + (ex.message || ex), false);
+        });
+}
+
+/* --- Onboarding hotspot (comitup) password card --- */
+const COMITUP_CONF = "/etc/comitup.conf";
+
+function setHotspotPassword(password) {
+    const el = $("hotspot-status");
+    if (password && (password.length < 8 || password.length > 63))
+        return setStatus(el, "Password must be 8-63 characters (WPA2).", false);
+    const file = cockpit.file(COMITUP_CONF, { superuser: "require" });
+    file.read()
+        .then((content) => {
+            let text = content || "";
+            const line = "ap_password: " + password;
+            const re = /^#?\s*ap_password:.*$/m;
+            if (password) {
+                if (re.test(text)) text = text.replace(re, line);
+                else text = text.replace(/\n*$/, "\n") + line + "\n";
+            } else {
+                // Comment the setting out to return to an open AP.
+                text = text.replace(re, "# ap_password:");
+            }
+            return file.replace(text);
+        })
+        .then(() => cockpit.spawn(["systemctl", "try-restart", "comitup"],
+            { superuser: "require", err: "message" }).catch(() => undefined))
+        .then(() => {
+            $("hotspot-pass").value = "";
+            setStatus(el, password
+                ? "Hotspot password set. Applies to the next hotspot (reboot to force)."
+                : "Hotspot password removed — onboarding AP is open.", true);
+        })
+        .catch((ex) => setStatus(el, "Failed: " + (ex.message || ex), false));
+}
+
 /* --- Radios (RTL-SDR) card --- */
 const RADIO_SERIAL_RE = /^[A-Za-z0-9:._-]{1,32}$/;
 
@@ -910,6 +994,13 @@ $("btn-support-generate").addEventListener("click", generateSupportBundle);
 $("btn-support-download").addEventListener("click", downloadSupportBundle);
 $("btn-nodered-pass").addEventListener("click", setNoderedPassword);
 $("btn-radios-refresh").addEventListener("click", refreshRadios);
+$("role-select").addEventListener("change", renderRoleUnits);
+$("btn-role-apply").addEventListener("click", applyRole);
+$("btn-hotspot-save").addEventListener("click", () => setHotspotPassword($("hotspot-pass").value));
+$("btn-hotspot-clear").addEventListener("click", () => {
+    if (window.confirm("Remove the hotspot password? The onboarding AP will be open."))
+        setHotspotPassword("");
+});
 $("btn-ts-refresh").addEventListener("click", refreshTailscale);
 $("btn-ts-start").addEventListener("click", tsStartDaemon);
 $("btn-ts-connect").addEventListener("click", tsConnect);
@@ -919,5 +1010,6 @@ $("btn-ts-logout").addEventListener("click", tsLogout);
 refreshUpdateStatus();
 refreshSupportState();
 refreshRadios();
+refreshRole();
 refreshTailscale();
 setInterval(refreshNeighbors, 8000);

@@ -38,6 +38,44 @@ SPDX-License-Identifier: Apache-2.0
       </label>
     </section>
 
+    <section class="aos-card" id="card-role">
+      <h2>Device role</h2>
+      <p class="aos-hint">Choose which sensor pipelines run on this unit. The CoT core (Charontak,
+        LINCOT, GPSTAK, gpsd) always runs; the role enables its sensor services at boot and stops
+        the rest.</p>
+      <label>Role
+        <select id="role-select">
+          <option value="multi">Multi-sensor (all pipelines)</option>
+          <option value="air">Air — ADS-B 1090/978 aircraft</option>
+          <option value="maritime">Maritime — AIS vessels</option>
+          <option value="cuas">C-UAS — drone detection</option>
+          <option value="relay">Relay — CoT routing only</option>
+        </select>
+      </label>
+      <div id="role-units" class="aos-hint"></div>
+      <div class="aos-actions-inline">
+        <button class="aos-btn aos-primary" id="btn-role-apply">Apply role</button>
+      </div>
+      <span id="role-status" class="aos-status"></span>
+    </section>
+
+    <section class="aos-card" id="card-hotspot">
+      <h2>Onboarding hotspot password</h2>
+      <p class="aos-hint">When no known Wi-Fi is in range, AryaOS broadcasts its onboarding hotspot
+        (comitup). By default it is <strong>open</strong> — set a WPA2 password (8&ndash;63
+        characters) to protect it. Applies after the next reboot (or comitup restart).</p>
+      <div class="aos-row">
+        <label>Hotspot password (blank = open)
+          <input type="password" id="hotspot-pass" autocomplete="new-password" minlength="8" maxlength="63">
+        </label>
+      </div>
+      <div class="aos-actions-inline">
+        <button class="aos-btn" id="btn-hotspot-save">Save hotspot password</button>
+        <button class="aos-btn" id="btn-hotspot-clear">Remove password (open AP)</button>
+      </div>
+      <span id="hotspot-status" class="aos-status"></span>
+    </section>
+
     <section class="aos-card" id="card-radios">
       <div class="aos-section-head">
         <h2>Radios (RTL-SDR)</h2>
