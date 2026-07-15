@@ -765,6 +765,129 @@ function setNoderedPassword() {
         });
 }
 
+/* --- Tailscale VPN card --- */
+const TAILSCALE = "/usr/bin/tailscale";
+let tsLoginProc = null;
+
+function tsButtons(state) {
+    $("btn-ts-start").hidden = state !== "NoDaemon";
+    $("btn-ts-connect").hidden = state === "NoDaemon" || tsLoginProc !== null;
+    $("btn-ts-cancel").hidden = tsLoginProc === null;
+    $("btn-ts-down").disabled = state !== "Running";
+    $("btn-ts-logout").disabled = state !== "Running" && state !== "Stopped";
+}
+
+function refreshTailscale() {
+    cockpit.spawn([TAILSCALE, "status", "--json"], { superuser: "try", err: "message" })
+        .then((out) => {
+            const st = JSON.parse(out);
+            const state = st.BackendState || "Unknown";
+            const ips = (st.TailscaleIPs || []).join(", ");
+            const dns = st.Self && st.Self.DNSName ? st.Self.DNSName.replace(/\.$/, "") : "";
+            let text;
+            if (state === "Running")
+                text = "Connected as " + (dns || "this node") + (ips ? " (" + ips + ")" : "");
+            else if (state === "NeedsLogin")
+                text = "Not logged in to a tailnet.";
+            else if (state === "Stopped")
+                text = "Logged in but disconnected.";
+            else
+                text = "Tailscale state: " + state;
+            $("ts-state").textContent = text;
+            $("btn-ts-connect").textContent =
+                state === "Stopped" ? "Reconnect" : "Connect (get login link)";
+            tsButtons(state);
+        })
+        .catch((ex) => {
+            $("ts-state").textContent =
+                "Tailscale daemon not running (" + ((ex.message || ex) + "").split("\n")[0] + ")";
+            tsButtons("NoDaemon");
+        });
+}
+
+function tsStartDaemon() {
+    const el = $("ts-status");
+    cockpit.spawn(["systemctl", "enable", "--now", "tailscaled"],
+        { superuser: "require", err: "message" })
+        .then(() => {
+            setStatus(el, "Tailscale service started.", true);
+            refreshTailscale();
+        })
+        .catch((ex) => setStatus(el, "Failed: " + (ex.message || ex), false));
+}
+
+function tsConnect() {
+    if (tsLoginProc) return;
+    const el = $("ts-status");
+    const link = $("ts-login-link");
+    link.textContent = "";
+    const proc = cockpit.spawn([TAILSCALE, "up"], { superuser: "require", err: "out" });
+    tsLoginProc = proc;
+    tsButtons("NeedsLogin");
+    setStatus(el, "Requesting login link...", true);
+    let buf = "";
+    let linkShown = false;
+    proc.stream((data) => {
+        buf += data;
+        const m = buf.match(/https:\/\/login\.tailscale\.com\/\S+/);
+        if (m && !linkShown) {
+            linkShown = true;
+            const a = document.createElement("a");
+            a.href = m[0];
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = m[0];
+            link.textContent = "Open on any signed-in device to authorize this node: ";
+            link.appendChild(a);
+            setStatus(el, "Waiting for authorization...", true);
+        }
+    });
+    proc.then(() => {
+        link.textContent = "";
+        setStatus(el, "Connected to tailnet.", true);
+    })
+        .catch((ex) => {
+            if (String(ex.problem || "") !== "cancelled")
+                setStatus(el, "Login failed: " + (ex.message || ex), false);
+        })
+        .then(() => {
+            tsLoginProc = null;
+            refreshTailscale();
+        });
+}
+
+function tsCancelLogin() {
+    if (tsLoginProc) {
+        tsLoginProc.close("cancelled");
+        tsLoginProc = null;
+        $("ts-login-link").textContent = "";
+        setStatus($("ts-status"), "Login cancelled.", true);
+        refreshTailscale();
+    }
+}
+
+function tsDown() {
+    const el = $("ts-status");
+    cockpit.spawn([TAILSCALE, "down"], { superuser: "require", err: "message" })
+        .then(() => {
+            setStatus(el, "Disconnected from tailnet.", true);
+            refreshTailscale();
+        })
+        .catch((ex) => setStatus(el, "Failed: " + (ex.message || ex), false));
+}
+
+function tsLogout() {
+    const el = $("ts-status");
+    if (!window.confirm("Log this node out of the tailnet? It will need a new login link to rejoin."))
+        return;
+    cockpit.spawn([TAILSCALE, "logout"], { superuser: "require", err: "message" })
+        .then(() => {
+            setStatus(el, "Logged out of tailnet.", true);
+            refreshTailscale();
+        })
+        .catch((ex) => setStatus(el, "Failed: " + (ex.message || ex), false));
+}
+
 /* --- init --- */
 configFile.watch((content) => {
     configText = content || "";
@@ -787,7 +910,14 @@ $("btn-support-generate").addEventListener("click", generateSupportBundle);
 $("btn-support-download").addEventListener("click", downloadSupportBundle);
 $("btn-nodered-pass").addEventListener("click", setNoderedPassword);
 $("btn-radios-refresh").addEventListener("click", refreshRadios);
+$("btn-ts-refresh").addEventListener("click", refreshTailscale);
+$("btn-ts-start").addEventListener("click", tsStartDaemon);
+$("btn-ts-connect").addEventListener("click", tsConnect);
+$("btn-ts-cancel").addEventListener("click", tsCancelLogin);
+$("btn-ts-down").addEventListener("click", tsDown);
+$("btn-ts-logout").addEventListener("click", tsLogout);
 refreshUpdateStatus();
 refreshSupportState();
 refreshRadios();
+refreshTailscale();
 setInterval(refreshNeighbors, 8000);

@@ -160,6 +160,26 @@ SPDX-License-Identifier: Apache-2.0
       <span id="nodered-status" class="aos-status"></span>
     </section>
 
+    <section class="aos-card" id="card-tailscale">
+      <div class="aos-section-head">
+        <h2>VPN (Tailscale)</h2>
+        <button class="aos-icon-btn" id="btn-ts-refresh" title="Refresh VPN status" aria-label="Refresh VPN status">&#8635;</button>
+      </div>
+      <p class="aos-hint">Join this box to your Tailscale tailnet for remote access without port
+        forwarding. <em>Connect</em> produces a one-time login link — open it on any signed-in
+        device to authorize this node.</p>
+      <div class="aos-update-summary" id="ts-state">Checking Tailscale status...</div>
+      <div id="ts-login-link" class="aos-hint"></div>
+      <div class="aos-actions-inline">
+        <button class="aos-btn aos-btn-big" id="btn-ts-start" hidden>Start Tailscale service</button>
+        <button class="aos-btn aos-primary aos-btn-big" id="btn-ts-connect">Connect (get login link)</button>
+        <button class="aos-btn" id="btn-ts-cancel" hidden>Cancel login</button>
+        <button class="aos-btn" id="btn-ts-down" disabled>Disconnect</button>
+        <button class="aos-btn" id="btn-ts-logout" disabled>Log out of tailnet</button>
+      </div>
+      <span id="ts-status" class="aos-status"></span>
+    </section>
+
     <section class="aos-card" id="card-neighbors">
       <div class="aos-section-head">
         <h2>Nearby AryaOS nodes</h2>
