@@ -599,6 +599,78 @@ function refreshNeighbors() {
         .catch((ex) => renderNeighbors({ ok: false, error: ex.message || String(ex) }));
 }
 
+/* --- Radios (RTL-SDR) card --- */
+const RADIO_SERIAL_RE = /^[A-Za-z0-9:._-]{1,32}$/;
+
+function renderRadios(payload) {
+    const tbody = $("radios-table").querySelector("tbody");
+    tbody.textContent = "";
+    const devices = (payload && payload.devices) || [];
+    if (!devices.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 5;
+        td.textContent = "No RTL-SDR dongles detected.";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+    }
+    devices.forEach((dev) => {
+        const tr = document.createElement("tr");
+        [String(dev.index), (dev.vendor + " " + dev.product).trim(), dev.serial || "-"].forEach((text) => {
+            const td = document.createElement("td");
+            td.textContent = text;
+            tr.appendChild(td);
+        });
+        const tdInput = document.createElement("td");
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "stx:1090:0";
+        input.setAttribute("list", "radio-serials");
+        tdInput.appendChild(input);
+        tr.appendChild(tdInput);
+        const tdBtn = document.createElement("td");
+        const btn = document.createElement("button");
+        btn.className = "aos-btn";
+        btn.textContent = "Write";
+        btn.addEventListener("click", () => writeRadioSerial(dev, input.value.trim(), btn));
+        tdBtn.appendChild(btn);
+        tr.appendChild(tdBtn);
+        tbody.appendChild(tr);
+    });
+}
+
+function refreshRadios() {
+    const el = $("radios-status");
+    cockpit.spawn(["/usr/local/sbin/aryaos-sdr", "list"], { superuser: "try", err: "message" })
+        .then((out) => renderRadios(JSON.parse(out)))
+        .catch((ex) => {
+            renderRadios(null);
+            setStatus(el, "Scan failed: " + (ex.message || ex), false);
+        });
+}
+
+function writeRadioSerial(dev, serial, btn) {
+    const el = $("radios-status");
+    if (!RADIO_SERIAL_RE.test(serial))
+        return setStatus(el, "Serial must be 1-32 chars of letters, digits, : . _ -", false);
+    if (!window.confirm("Write serial '" + serial + "' to radio #" + dev.index +
+        " (" + (dev.serial || "no serial") + ")? SDR services stop briefly; replug the dongle afterwards."))
+        return;
+    btn.disabled = true;
+    cockpit.spawn(["/usr/local/sbin/aryaos-sdr", "set-serial", String(dev.index), serial],
+        { superuser: "require", err: "message" })
+        .then(() => {
+            btn.disabled = false;
+            setStatus(el, "Serial written. Replug the dongle (or reboot), then rescan.", true);
+            refreshRadios();
+        })
+        .catch((ex) => {
+            btn.disabled = false;
+            setStatus(el, "Failed: " + (ex.message || ex), false);
+        });
+}
+
 /* --- Support bundle card --- */
 const SUPPORT_STATE = "/var/lib/aryaos/support-bundle.json";
 let supportBundlePath = null;
@@ -714,6 +786,8 @@ $("btn-update-apply").addEventListener("click", applyUpdates);
 $("btn-support-generate").addEventListener("click", generateSupportBundle);
 $("btn-support-download").addEventListener("click", downloadSupportBundle);
 $("btn-nodered-pass").addEventListener("click", setNoderedPassword);
+$("btn-radios-refresh").addEventListener("click", refreshRadios);
 refreshUpdateStatus();
 refreshSupportState();
+refreshRadios();
 setInterval(refreshNeighbors, 8000);
