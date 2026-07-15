@@ -105,6 +105,37 @@ SPDX-License-Identifier: Apache-2.0
         <a href="../updates">Software updates (PackageKit)</a>.</p>
     </section>
 
+    <section class="aos-card" id="card-support">
+      <h2>Support bundle</h2>
+      <p class="aos-hint">Generate a diagnostics tarball for troubleshooting and field reports:
+        system, package &amp; service state, recent journals, network/firewall state, and sensor
+        configs. Passwords, tokens and enrollment credentials are redacted; TLS keys are never
+        included.</p>
+      <div class="aos-actions-inline">
+        <button class="aos-btn aos-btn-big" id="btn-support-generate">Generate support bundle</button>
+        <button class="aos-btn" id="btn-support-download" hidden>Download</button>
+      </div>
+      <span id="support-status" class="aos-status"></span>
+      <div id="support-last" class="aos-hint"></div>
+    </section>
+
+    <section class="aos-card" id="card-nodered">
+      <h2>Node-RED admin password</h2>
+      <p class="aos-hint">Node-RED ships with a publicly known default admin password
+        (<code>aryaos415</code>) and its editor can run code on this device — set a unique
+        password before fielding this unit. Node-RED restarts after the change.</p>
+      <div class="aos-row">
+        <label>New password
+          <input type="password" id="nodered-pass" autocomplete="new-password" minlength="8">
+        </label>
+        <label>Confirm password
+          <input type="password" id="nodered-pass2" autocomplete="new-password" minlength="8">
+        </label>
+      </div>
+      <button class="aos-btn" id="btn-nodered-pass">Set Node-RED password</button>
+      <span id="nodered-status" class="aos-status"></span>
+    </section>
+
     <section class="aos-card" id="card-neighbors">
       <div class="aos-section-head">
         <h2>Nearby AryaOS nodes</h2>
