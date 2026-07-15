@@ -599,6 +599,100 @@ function refreshNeighbors() {
         .catch((ex) => renderNeighbors({ ok: false, error: ex.message || String(ex) }));
 }
 
+/* --- Support bundle card --- */
+const SUPPORT_STATE = "/var/lib/aryaos/support-bundle.json";
+let supportBundlePath = null;
+
+function fmtSize(bytes) {
+    if (!bytes && bytes !== 0) return "";
+    if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + " MB";
+    if (bytes >= 1024) return (bytes / 1024).toFixed(0) + " kB";
+    return bytes + " B";
+}
+
+function renderSupportState(state) {
+    if (!state || !state.path) {
+        supportBundlePath = null;
+        $("btn-support-download").hidden = true;
+        $("support-last").textContent = "";
+        return;
+    }
+    supportBundlePath = state.path;
+    $("btn-support-download").hidden = false;
+    $("support-last").textContent =
+        "Last bundle: " + state.path.split("/").pop() +
+        " (" + fmtSize(state.size) + ", " + (state.generated_at || "") + ")";
+}
+
+function refreshSupportState() {
+    cockpit.file(SUPPORT_STATE, { superuser: "try", syntax: JSON }).read()
+        .then(renderSupportState)
+        .catch(() => renderSupportState(null));
+}
+
+function generateSupportBundle() {
+    const el = $("support-status");
+    const btn = $("btn-support-generate");
+    btn.disabled = true;
+    setStatus(el, "Collecting diagnostics (up to a minute)...", true);
+    cockpit.spawn(["/usr/local/sbin/aryaos-support-bundle"],
+        { superuser: "require", err: "message" })
+        .then(() => {
+            btn.disabled = false;
+            setStatus(el, "Bundle ready.", true);
+            refreshSupportState();
+        })
+        .catch((ex) => {
+            btn.disabled = false;
+            setStatus(el, "Failed: " + (ex.message || ex), false);
+        });
+}
+
+function downloadSupportBundle() {
+    const el = $("support-status");
+    if (!supportBundlePath) return;
+    cockpit.file(supportBundlePath, { superuser: "require", binary: true, max_read_size: 256 * 1024 * 1024 })
+        .read()
+        .then((data) => {
+            if (!data) throw new Error("bundle not found — generate it again");
+            const blob = new Blob([data], { type: "application/gzip" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = supportBundlePath.split("/").pop();
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+        })
+        .catch((ex) => setStatus(el, "Download failed: " + (ex.message || ex), false));
+}
+
+/* --- Node-RED admin password card --- */
+function setNoderedPassword() {
+    const el = $("nodered-status");
+    const pass = $("nodered-pass").value;
+    const pass2 = $("nodered-pass2").value;
+    if (pass.length < 8)
+        return setStatus(el, "Password must be at least 8 characters.", false);
+    if (pass !== pass2)
+        return setStatus(el, "Passwords do not match.", false);
+    const btn = $("btn-nodered-pass");
+    btn.disabled = true;
+    cockpit.spawn(["/usr/local/sbin/aryaos-set-nodered-password"],
+        { superuser: "require", err: "message" })
+        .input(pass + "\n", false)
+        .then(() => {
+            btn.disabled = false;
+            $("nodered-pass").value = "";
+            $("nodered-pass2").value = "";
+            setStatus(el, "Password updated; Node-RED restarted.", true);
+        })
+        .catch((ex) => {
+            btn.disabled = false;
+            setStatus(el, "Failed: " + (ex.message || ex), false);
+        });
+}
+
 /* --- init --- */
 configFile.watch((content) => {
     configText = content || "";
@@ -617,5 +711,9 @@ $("btn-tak-refresh").addEventListener("click", refreshTakEnrollmentStatus);
 $("btn-neighbors-refresh").addEventListener("click", refreshNeighbors);
 $("btn-update-check").addEventListener("click", checkUpdates);
 $("btn-update-apply").addEventListener("click", applyUpdates);
+$("btn-support-generate").addEventListener("click", generateSupportBundle);
+$("btn-support-download").addEventListener("click", downloadSupportBundle);
+$("btn-nodered-pass").addEventListener("click", setNoderedPassword);
 refreshUpdateStatus();
+refreshSupportState();
 setInterval(refreshNeighbors, 8000);
