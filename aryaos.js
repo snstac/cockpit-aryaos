@@ -823,6 +823,149 @@ function downloadSupportBundle() {
         .catch((ex) => setStatus(el, "Download failed: " + (ex.message || ex), false));
 }
 
+/* --- Backup & restore card --- */
+const BACKUP_STATE = "/var/lib/aryaos/config-backup.json";
+let backupPath = null;
+
+function renderBackupState(state) {
+    if (!state || !state.path) {
+        backupPath = null;
+        $("btn-backup-download").hidden = true;
+        $("backup-last").textContent = "";
+        return;
+    }
+    backupPath = state.path;
+    $("btn-backup-download").hidden = false;
+    $("backup-last").textContent =
+        "Last backup: " + state.path.split("/").pop() +
+        " (" + fmtSize(state.size) + (state.include_secrets ? ", with secrets" : ", no secrets") + ")";
+}
+
+function refreshBackupState() {
+    cockpit.file(BACKUP_STATE, { superuser: "try", syntax: JSON }).read()
+        .then(renderBackupState)
+        .catch(() => renderBackupState(null));
+}
+
+function createBackup() {
+    const el = $("backup-status");
+    const btn = $("btn-backup-create");
+    const args = ["/usr/local/sbin/aryaos-config-backup", "backup"];
+    if (!$("backup-secrets").checked) args.push("--no-secrets");
+    btn.disabled = true;
+    setStatus(el, "Creating backup...", true);
+    cockpit.spawn(args, { superuser: "require", err: "message" })
+        .then(() => {
+            btn.disabled = false;
+            setStatus(el, "Backup created.", true);
+            refreshBackupState();
+        })
+        .catch((ex) => {
+            btn.disabled = false;
+            setStatus(el, "Failed: " + (ex.message || ex), false);
+        });
+}
+
+function downloadBackup() {
+    const el = $("backup-status");
+    if (!backupPath) return;
+    cockpit.file(backupPath, { superuser: "require", binary: true, max_read_size: 256 * 1024 * 1024 })
+        .read()
+        .then((data) => {
+            if (!data) throw new Error("backup not found — create it again");
+            const blob = new Blob([data], { type: "application/gzip" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = backupPath.split("/").pop();
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+        })
+        .catch((ex) => setStatus(el, "Download failed: " + (ex.message || ex), false));
+}
+
+function restoreBackup() {
+    const el = $("backup-status");
+    const input = $("restore-file");
+    const file = input.files && input.files[0];
+    if (!file) return setStatus(el, "Choose a backup archive to restore.", false);
+    if (!window.confirm("Restore configuration from " + file.name +
+        "? This overwrites the current configuration and reboots is recommended."))
+        return;
+    const dest = "/var/lib/aryaos/backups/" + file.name.replace(/[^A-Za-z0-9._-]/g, "_");
+    const btn = $("btn-restore");
+    btn.disabled = true;
+    setStatus(el, "Uploading and restoring...", true);
+    const reader = new FileReader();
+    reader.onerror = () => { btn.disabled = false; setStatus(el, "Could not read the file.", false); };
+    reader.onload = () => {
+        const bytes = new Uint8Array(reader.result);
+        cockpit.spawn(["mkdir", "-p", "/var/lib/aryaos/backups"], { superuser: "require", err: "message" })
+            .then(() => cockpit.file(dest, { superuser: "require", binary: true }).replace(bytes))
+            .then(() => cockpit.spawn(["/usr/local/sbin/aryaos-config-backup", "restore", dest, "--service"],
+                { superuser: "require", err: "message" }))
+            .then(() => {
+                btn.disabled = false;
+                setStatus(el, "Restore complete. Reboot to fully apply.", true);
+            })
+            .catch((ex) => {
+                btn.disabled = false;
+                setStatus(el, "Restore failed: " + (ex.message || ex), false);
+            });
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+/* --- Reset & decommission card --- */
+function hostnameThen(cb) {
+    cockpit.file("/etc/hostname").read()
+        .then((h) => cb((h || "").trim()))
+        .catch(() => cb(""));
+}
+
+function wireFactoryReset(hostname) {
+    const input = $("reset-confirm");
+    const btn = $("btn-factory-reset");
+    input.addEventListener("input", () => { btn.disabled = input.value.trim() !== hostname; });
+    btn.addEventListener("click", () => {
+        if (input.value.trim() !== hostname) return;
+        if (!window.confirm("Factory reset " + hostname + " and reboot now? The device will disconnect."))
+            return;
+        const el = $("reset-status");
+        btn.disabled = true;
+        // The wipe-network option is passed to the static service via a /run flag file.
+        const pre = $("reset-wipe-network").checked
+            ? cockpit.spawn(["touch", "/run/aryaos-factory-reset.wipe-network"], { superuser: "require", err: "message" })
+            : Promise.resolve();
+        pre.then(() => cockpit.spawn(["systemctl", "start", "--no-block", "aryaos-factory-reset.service"],
+            { superuser: "require", err: "message" }))
+            .then(() => setStatus(el, "Factory reset started — the device is rebooting.", true))
+            .catch((ex) => { btn.disabled = false; setStatus(el, "Failed: " + (ex.message || ex), false); });
+    });
+}
+
+function wireZeroize(hostname) {
+    const input = $("zeroize-confirm");
+    const btn = $("btn-zeroize");
+    const phrase = "ERASE " + hostname;
+    input.addEventListener("input", () => { btn.disabled = input.value !== phrase; });
+    btn.addEventListener("click", () => {
+        if (input.value !== phrase) return;
+        if (!window.confirm("ZEROIZE " + hostname + "? This destroys all keys, credentials, and data, then reboots."))
+            return;
+        const el = $("zeroize-status");
+        btn.disabled = true;
+        const pre = $("zeroize-keep-network").checked
+            ? cockpit.spawn(["touch", "/run/aryaos-zeroize.keep-network"], { superuser: "require", err: "message" })
+            : Promise.resolve();
+        pre.then(() => cockpit.spawn(["systemctl", "start", "--no-block", "aryaos-zeroize.service"],
+            { superuser: "require", err: "message" }))
+            .then(() => setStatus(el, "Zeroize started — the device is sanitizing and will reboot.", true))
+            .catch((ex) => { btn.disabled = false; setStatus(el, "Failed: " + (ex.message || ex), false); });
+    });
+}
+
 /* --- Node-RED admin password card --- */
 function setNoderedPassword() {
     const el = $("nodered-status");
@@ -1007,9 +1150,17 @@ $("btn-ts-connect").addEventListener("click", tsConnect);
 $("btn-ts-cancel").addEventListener("click", tsCancelLogin);
 $("btn-ts-down").addEventListener("click", tsDown);
 $("btn-ts-logout").addEventListener("click", tsLogout);
+$("btn-backup-create").addEventListener("click", createBackup);
+$("btn-backup-download").addEventListener("click", downloadBackup);
+$("btn-restore").addEventListener("click", restoreBackup);
+$("backup-secrets").addEventListener("change", () => {
+    $("backup-secrets-warn").hidden = !$("backup-secrets").checked;
+});
+hostnameThen((h) => { wireFactoryReset(h); wireZeroize(h); });
 refreshUpdateStatus();
 refreshSupportState();
 refreshRadios();
 refreshRole();
 refreshTailscale();
+refreshBackupState();
 setInterval(refreshNeighbors, 8000);
