@@ -218,6 +218,65 @@ SPDX-License-Identifier: Apache-2.0
       <span id="ts-status" class="aos-status"></span>
     </section>
 
+    <section class="aos-card" id="card-backup">
+      <h2>Backup &amp; restore</h2>
+      <p class="aos-hint">Save the full device configuration — site settings, TAK certificates,
+        Charontak lanes, per-gateway settings, network, and Node-RED — to a restorable archive.
+        Use it to migrate to a replacement box or keep a golden config.</p>
+      <div class="aos-row">
+        <label class="aos-check"><input type="checkbox" id="backup-secrets" checked> Include private keys &amp; Wi-Fi passwords
+          (uncheck for a shareable, secrets-free backup)</label>
+      </div>
+      <div class="aos-actions-inline">
+        <button class="aos-btn aos-btn-big" id="btn-backup-create">Create backup</button>
+        <button class="aos-btn" id="btn-backup-download" hidden>Download</button>
+      </div>
+      <p class="aos-hint" id="backup-secrets-warn"><strong>Note:</strong> a backup with secrets contains
+        private keys and Wi-Fi passwords in the clear. Store it securely.</p>
+      <div id="backup-last" class="aos-hint"></div>
+      <div class="aos-upload-row">
+        <label class="aos-file-label">Restore from a backup archive
+          <input type="file" id="restore-file" accept=".tar.gz,.tgz,application/gzip">
+        </label>
+        <button class="aos-btn" id="btn-restore">Restore</button>
+      </div>
+      <span id="backup-status" class="aos-status"></span>
+    </section>
+
+    <section class="aos-card" id="card-maintenance">
+      <h2>Reset &amp; decommission</h2>
+      <p class="aos-hint">Destructive maintenance actions. The device reboots when they finish.
+        Consider creating a backup first (above).</p>
+
+      <h3>Factory reset</h3>
+      <p class="aos-hint">Restores AryaOS to factory defaults — clears site config, TAK certificates,
+        Charontak lanes, and device identity, then re-runs first-boot setup. Keeps the OS, installed
+        packages, and (by default) the current Wi-Fi so a remote box is not stranded.</p>
+      <div class="aos-row">
+        <label class="aos-check"><input type="checkbox" id="reset-wipe-network"> Also remove saved Wi-Fi networks &amp; hotspot password</label>
+      </div>
+      <div class="aos-actions-inline">
+        <input type="text" id="reset-confirm" placeholder="type the hostname to confirm" autocomplete="off">
+        <button class="aos-btn aos-btn-danger aos-btn-big" id="btn-factory-reset" disabled>Factory reset &amp; reboot</button>
+      </div>
+      <span id="reset-status" class="aos-status"></span>
+
+      <h3 style="margin-top:1.5rem">Zeroize (secure sanitize)</h3>
+      <p class="aos-hint">Shreds and removes <strong>every</strong> key, credential, network secret, log,
+        recorded track, and identity, overwrites free space, and reboots clean. For decommissioning or
+        before the box leaves your control. The box stays usable.</p>
+      <p class="aos-hint"><strong>Flash-media limit:</strong> wear-leveling means overwrite/TRIM is
+        best-effort, not a guarantee. For a hard guarantee use full-disk encryption or destroy the media.</p>
+      <div class="aos-row">
+        <label class="aos-check"><input type="checkbox" id="zeroize-keep-network"> Keep saved Wi-Fi networks (default: wipe them)</label>
+      </div>
+      <div class="aos-actions-inline">
+        <input type="text" id="zeroize-confirm" placeholder="type: ERASE &lt;hostname&gt;" autocomplete="off">
+        <button class="aos-btn aos-btn-danger aos-btn-big" id="btn-zeroize" disabled>Zeroize &amp; reboot</button>
+      </div>
+      <span id="zeroize-status" class="aos-status"></span>
+    </section>
+
     <section class="aos-card" id="card-neighbors">
       <div class="aos-section-head">
         <h2>Nearby AryaOS nodes</h2>

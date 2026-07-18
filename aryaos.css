@@ -130,6 +130,16 @@ body {
   color: var(--aos-accent-ink);
 }
 
+.aos-btn.aos-btn-danger {
+  border-color: var(--aos-danger);
+  color: var(--aos-danger);
+}
+
+.aos-btn.aos-btn-danger:not(:disabled):hover {
+  background: var(--aos-danger);
+  color: var(--aos-bg, #071211);
+}
+
 .aos-btn:disabled {
   opacity: 0.5;
   cursor: default;
