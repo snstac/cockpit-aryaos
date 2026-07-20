@@ -683,6 +683,48 @@ function setHotspotPassword(password) {
         .catch((ex) => setStatus(el, "Failed: " + (ex.message || ex), false));
 }
 
+/* --- Radio control & EMCON card (backed by /usr/local/sbin/aryaos-radio) --- */
+function refreshRadioControl() {
+    cockpit.spawn(["aryaos-radio", "ap", "status"], { superuser: "try", err: "message" })
+        .then((out) => {
+            const on = /\bactive\b/.test(out) && /\benabled\b/.test(out);
+            const btn = $("btn-ap-toggle");
+            btn.dataset.on = on ? "1" : "0";
+            btn.textContent = on ? "Disable Wi-Fi hotspot" : "Enable Wi-Fi hotspot";
+        }).catch(() => undefined);
+    cockpit.spawn(["aryaos-radio", "silence", "status"], { superuser: "try", err: "message" })
+        .then((out) => {
+            const on = /emcon:\s*ON/i.test(out);
+            const btn = $("btn-emcon-toggle");
+            btn.dataset.on = on ? "1" : "0";
+            btn.textContent = on ? "Disable EMCON (restore radios)" : "Enable EMCON (radio silence)";
+        }).catch(() => undefined);
+}
+
+function toggleAP() {
+    const el = $("ap-control-status");
+    const on = $("btn-ap-toggle").dataset.on === "1";
+    const action = on ? "off" : "on";
+    setStatus(el, on ? "Disabling hotspot…" : "Enabling hotspot…", true);
+    cockpit.spawn(["aryaos-radio", "ap", action], { superuser: "require", err: "message" })
+        .then((out) => { setStatus(el, out.trim() || "Done.", true); refreshRadioControl(); })
+        .catch((ex) => setStatus(el, "Failed: " + (ex.message || ex), false));
+}
+
+function toggleEMCON() {
+    const el = $("emcon-status");
+    const on = $("btn-emcon-toggle").dataset.on === "1";
+    const action = on ? "off" : "on";
+    if (!on && !window.confirm(
+        "Enable EMCON? This rfkill-blocks Wi-Fi and Bluetooth (the box goes radio-silent). " +
+        "Ethernet stays up. It persists across reboot until you disable it."))
+        return;
+    setStatus(el, on ? "Restoring radios…" : "Blocking radios…", true);
+    cockpit.spawn(["aryaos-radio", "silence", action], { superuser: "require", err: "message" })
+        .then((out) => { setStatus(el, out.split("\n")[0].trim() || "Done.", true); refreshRadioControl(); })
+        .catch((ex) => setStatus(el, "Failed: " + (ex.message || ex), false));
+}
+
 /* --- Radios (RTL-SDR) card --- */
 const RADIO_SERIAL_RE = /^[A-Za-z0-9:._-]{1,32}$/;
 
@@ -1144,6 +1186,9 @@ $("btn-hotspot-clear").addEventListener("click", () => {
     if (window.confirm("Remove the hotspot password? The onboarding AP will be open."))
         setHotspotPassword("");
 });
+$("btn-ap-toggle").addEventListener("click", toggleAP);
+$("btn-emcon-toggle").addEventListener("click", toggleEMCON);
+refreshRadioControl();
 $("btn-ts-refresh").addEventListener("click", refreshTailscale);
 $("btn-ts-start").addEventListener("click", tsStartDaemon);
 $("btn-ts-connect").addEventListener("click", tsConnect);
