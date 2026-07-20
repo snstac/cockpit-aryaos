@@ -76,6 +76,22 @@ SPDX-License-Identifier: Apache-2.0
       <span id="hotspot-status" class="aos-status"></span>
     </section>
 
+    <section class="aos-card" id="card-radio-control">
+      <h2>Radio control &amp; EMCON</h2>
+      <p class="aos-hint">Turn the Wi-Fi onboarding hotspot off once a unit is fielded on ethernet, or
+        put the box in <strong>EMCON</strong> (radio silence) &mdash; <code>rfkill</code> blocks Wi-Fi
+        <em>and</em> Bluetooth for low-emissions (LPI/LPD) operation. Ethernet is unaffected, SDR
+        receivers keep running, and EMCON persists across reboot.</p>
+      <div class="aos-actions-inline">
+        <button class="aos-btn" id="btn-ap-toggle">Disable Wi-Fi hotspot</button>
+      </div>
+      <span id="ap-control-status" class="aos-status"></span>
+      <div class="aos-actions-inline" style="margin-top:.75rem">
+        <button class="aos-btn aos-btn-danger" id="btn-emcon-toggle">Enable EMCON (radio silence)</button>
+      </div>
+      <span id="emcon-status" class="aos-status"></span>
+    </section>
+
     <section class="aos-card" id="card-radios">
       <div class="aos-section-head">
         <h2>Radios (RTL-SDR)</h2>
