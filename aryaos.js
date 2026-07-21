@@ -1192,6 +1192,42 @@ $("btn-restore").addEventListener("click", restoreBackup);
 $("backup-secrets").addEventListener("change", () => {
     $("backup-secrets-warn").hidden = !$("backup-secrets").checked;
 });
+
+/* --- OS image backup: pull down this box's own .img.xz --- */
+function fmtGB(bytes) {
+    return (Number(bytes || 0) / 1073741824).toFixed(2) + " GB";
+}
+function checkImage() {
+    const el = $("image-status");
+    setStatus(el, "Looking up this unit's image…", true);
+    cockpit.spawn(["aryaos-image-download", "--status"], { superuser: "try", err: "message" })
+        .then((out) => {
+            const d = JSON.parse(out || "{}");
+            if (!d.ok) throw new Error(d.error || "lookup failed");
+            const warn = d.fallback ? " (⚠ no build stamp — showing the newest release)" : "";
+            $("image-info").textContent =
+                `Image: ${d.tag} — ${d.asset} (${fmtGB(d.size)})${warn}` +
+                (d.already_downloaded ? " — already downloaded on this box." : "");
+            setStatus(el, "Ready to download.", true);
+        })
+        .catch((ex) => setStatus(el, "Lookup failed: " + (ex.message || ex), false));
+}
+function downloadImage() {
+    const el = $("image-status");
+    setStatus(el, "Downloading ~1.5 GB to the box — this takes a few minutes…", true);
+    $("btn-image-download").disabled = true;
+    cockpit.spawn(["aryaos-image-download"], { superuser: "require", err: "message" })
+        .then((out) => {
+            const d = JSON.parse((out || "{}").trim().split("\n").pop());
+            if (!d.ok) throw new Error(d.error || "download failed");
+            setStatus(el, `Saved ${d.path} (${fmtGB(d.size)})${d.cached ? " — already present" : ""}. ` +
+                "Copy it off the box, then re-flash from it.", true);
+        })
+        .catch((ex) => setStatus(el, "Download failed: " + (ex.message || ex), false))
+        .finally(() => { $("btn-image-download").disabled = false; });
+}
+$("btn-image-check").addEventListener("click", checkImage);
+$("btn-image-download").addEventListener("click", downloadImage);
 hostnameThen((h) => { wireFactoryReset(h); wireZeroize(h); });
 refreshUpdateStatus();
 refreshSupportState();

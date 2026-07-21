@@ -259,6 +259,20 @@ SPDX-License-Identifier: Apache-2.0
       <span id="backup-status" class="aos-status"></span>
     </section>
 
+    <section class="aos-card" id="card-image-backup">
+      <h2>OS image backup</h2>
+      <p class="aos-hint">Pull down a copy of the exact AryaOS image this unit was
+        built from &mdash; a cold backup you can copy off the box and re-flash later.
+        The download lands under <code>/var/lib/aryaos/image/</code> (about 1.5&nbsp;GB);
+        retrieve it over the network afterwards.</p>
+      <div class="aos-actions-inline">
+        <button class="aos-btn" id="btn-image-check">Check available image</button>
+        <button class="aos-btn aos-btn-big" id="btn-image-download">Download image to box</button>
+      </div>
+      <div id="image-info" class="aos-hint"></div>
+      <span id="image-status" class="aos-status"></span>
+    </section>
+
     <section class="aos-card" id="card-maintenance">
       <h2>Reset &amp; decommission</h2>
       <p class="aos-hint">Destructive maintenance actions. The device reboots when they finish.
