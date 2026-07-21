@@ -305,6 +305,90 @@ body {
   background: #7c8784;
 }
 
+/* --- Location chip: offline North America base map --- */
+.aos-map {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1000 / 640;
+  margin: 0.4rem 0 0.6rem;
+  border: 1px solid var(--aos-border);
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 120% at 30% 10%, rgba(53, 165, 143, 0.10), rgba(7, 18, 17, 0) 60%),
+    #061413;
+}
+
+.aos-map-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.aos-map-land polygon {
+  fill: var(--aos-panel-2);
+  stroke: rgba(110, 212, 190, 0.35);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.aos-map-halo {
+  fill: var(--aos-accent);
+  opacity: 0.28;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: aos-map-pulse 2.4s ease-out infinite;
+}
+
+@keyframes aos-map-pulse {
+  0%   { transform: scale(0.6); opacity: 0.45; }
+  70%  { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.aos-map-dot {
+  fill: var(--aos-danger);
+  stroke: #fff;
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+
+.aos-map-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--aos-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.aos-map-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+}
+
+.aos-map-coords {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-weight: 650;
+  font-size: 1.05rem;
+}
+
+.aos-map-src {
+  color: var(--aos-muted);
+  font-size: 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aos-map-halo {
+    animation: none;
+  }
+}
+
 @media (max-width: 760px) {
   .aos-card {
     margin-inline: -0.25rem;

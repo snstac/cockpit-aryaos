@@ -1236,3 +1236,116 @@ refreshRole();
 refreshTailscale();
 refreshBackupState();
 setInterval(refreshNeighbors, 8000);
+
+/* --- Location chip: offline North America base map + live position ---
+ * Base geometry ships in aryaos-basemap.js (window.ARYAOS_BASEMAP); the marker
+ * is projected with the same Web-Mercator transform so it lands exactly. No
+ * map tiles are fetched — this works fully offline / in EMCON. */
+const LOC_NS = "http://www.w3.org/2000/svg";
+const LOC_W = 1000, LOC_H = 640;
+let locMapBuilt = false;
+
+function locMercY(lat) {
+    return Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI / 180) / 2));
+}
+function locProject(lon, lat) {
+    const bm = window.ARYAOS_BASEMAP;
+    const b = bm.bbox, minLon = b[0], minLat = b[1], maxLon = b[2], maxLat = b[3];
+    const y0 = locMercY(maxLat), y1 = locMercY(minLat);
+    const x = (lon - minLon) / (maxLon - minLon) * LOC_W;
+    const y = (locMercY(lat) - y0) / (y1 - y0) * LOC_H;
+    return [x, y];
+}
+function locInView(lon, lat) {
+    const b = window.ARYAOS_BASEMAP.bbox;
+    return lon >= b[0] && lon <= b[2] && lat >= b[1] && lat <= b[3];
+}
+function buildLocationMap() {
+    if (locMapBuilt) return;
+    const bm = window.ARYAOS_BASEMAP, box = $("loc-map");
+    if (!bm || !box) return;
+    const svg = document.createElementNS(LOC_NS, "svg");
+    svg.setAttribute("viewBox", "0 0 " + LOC_W + " " + LOC_H);
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svg.setAttribute("class", "aos-map-svg");
+    const land = document.createElementNS(LOC_NS, "g");
+    land.setAttribute("class", "aos-map-land");
+    for (const ring of bm.rings) {
+        const poly = document.createElementNS(LOC_NS, "polygon");
+        poly.setAttribute("points", ring.map((p) => {
+            const xy = locProject(p[0], p[1]);
+            return xy[0].toFixed(1) + "," + xy[1].toFixed(1);
+        }).join(" "));
+        land.appendChild(poly);
+    }
+    svg.appendChild(land);
+    const marker = document.createElementNS(LOC_NS, "g");
+    marker.id = "loc-marker";
+    marker.setAttribute("class", "aos-map-marker");
+    marker.style.display = "none";
+    const halo = document.createElementNS(LOC_NS, "circle");
+    halo.setAttribute("class", "aos-map-halo"); halo.setAttribute("r", "18");
+    const dot = document.createElementNS(LOC_NS, "circle");
+    dot.setAttribute("class", "aos-map-dot"); dot.setAttribute("r", "8");
+    marker.appendChild(halo); marker.appendChild(dot);
+    svg.appendChild(marker);
+    box.insertBefore(svg, box.firstChild);
+    locMapBuilt = true;
+}
+function locBestTpv(out) {
+    let best = null, bestMode = 1;
+    (out || "").split("\n").forEach((line) => {
+        line = line.trim();
+        if (!line) return;
+        let o;
+        try { o = JSON.parse(line); } catch (e) { return; }
+        if (o.class !== "TPV" || o.lat == null || o.lon == null) return;
+        const mode = Number(o.mode || 0);
+        if (mode >= 2 && mode >= bestMode) { bestMode = mode; best = o; }
+    });
+    return best;
+}
+function showLocation(lat, lon, source) {
+    const coordsEl = $("loc-coords"), srcEl = $("loc-source"), emptyEl = $("loc-map-empty");
+    const marker = $("loc-marker");
+    if (lat == null || lon == null || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+        if (marker) marker.style.display = "none";
+        if (emptyEl) { emptyEl.textContent = "No position available"; emptyEl.style.display = ""; }
+        if (coordsEl) coordsEl.textContent = "—";
+        if (srcEl) srcEl.textContent = source || "";
+        return;
+    }
+    buildLocationMap();
+    const inView = locInView(lon, lat);
+    const m = $("loc-marker");
+    if (m) {
+        const xy = locProject(lon, lat);
+        m.setAttribute("transform", "translate(" + xy[0].toFixed(1) + " " + xy[1].toFixed(1) + ")");
+        m.style.display = "";
+    }
+    if (emptyEl) emptyEl.style.display = "none";
+    if (coordsEl) coordsEl.textContent = fmtNum(lat, 4) + ", " + fmtNum(lon, 4);
+    if (srcEl) srcEl.textContent = source + (inView ? "" : " — off the North America map");
+}
+function locStaticFallback() {
+    const lat = parseFloat(getKey(configText, "STATIC_LAT"));
+    const lon = parseFloat(getKey(configText, "STATIC_LON"));
+    if (Number.isFinite(lat) && Number.isFinite(lon) && !(lat === 0 && lon === 0))
+        showLocation(lat, lon, "Configured position (no GPS fix)");
+    else
+        showLocation(null, null, "No GPS fix and no configured position.");
+}
+function refreshLocation() {
+    buildLocationMap();
+    cockpit.spawn(["gpspipe", "--json", "-n", "8"], { err: "message" })
+        .then((out) => {
+            const t = locBestTpv(out);
+            if (!t) { locStaticFallback(); return; }
+            showLocation(t.lat, t.lon, t.mode >= 3 ? "GPS fix (3D)" : "GPS fix (2D)");
+        })
+        .catch(() => locStaticFallback());
+}
+$("btn-loc-refresh").addEventListener("click", refreshLocation);
+buildLocationMap();
+refreshLocation();
+setInterval(refreshLocation, 15000);
