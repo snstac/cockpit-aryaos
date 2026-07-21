@@ -197,16 +197,27 @@ function renderTakEnrollmentStatus(payload) {
     });
 }
 
+// TAK data-package / enrollment import runs through the authenticated Cockpit
+// superuser backend /usr/local/sbin/aryaos-tak-dp-import — NOT the old
+// unauthenticated /cgi-bin/aryaos-tak-dp-upload endpoint (which was reachable
+// pre-auth from the LAN and the onboarding hotspot = TAK/CoT takeover).
+function runTakImport(args, inputBytes, superuser) {
+    const proc = cockpit.spawn(["aryaos-tak-dp-import"].concat(args), {
+        superuser: superuser,
+        binary: true,
+        err: "message",
+    });
+    const done = (inputBytes !== null && inputBytes !== undefined) ? proc.input(inputBytes) : proc;
+    return done.then((out) => {
+        const text = typeof out === "string" ? out : new TextDecoder().decode(out);
+        const payload = JSON.parse(text || "{}");
+        if (!payload.ok) throw new Error(payload.error || "Operation failed");
+        return payload;
+    });
+}
+
 function refreshTakEnrollmentStatus() {
-    return fetch("/cgi-bin/aryaos-tak-dp-upload", {
-        method: "GET",
-        credentials: "same-origin",
-        cache: "no-store",
-    })
-        .then((r) => r.json().then((payload) => {
-            if (!r.ok || !payload.ok) throw new Error(payload.error || ("HTTP " + r.status));
-            return payload;
-        }))
+    return runTakImport(["--status"], null, "try")
         .then(renderTakEnrollmentStatus)
         .catch((ex) => {
             renderTakEnrollmentStatus({
@@ -228,23 +239,14 @@ function importDataPackage() {
         setStatus(el, "Choose a .zip or .dpk connection package first.", false);
         return;
     }
-    const body = new FormData();
-    body.append("package", file);
     el.textContent = "Importing package...";
     el.className = "aos-status";
-    fetch("/cgi-bin/aryaos-tak-dp-upload", {
-        method: "POST",
-        body,
-        credentials: "same-origin",
-        cache: "no-store",
-    })
-        .then((r) => r.json().then((payload) => {
-            if (!r.ok || !payload.ok) throw new Error(payload.error || ("HTTP " + r.status));
-            return payload;
-        }))
+    file.arrayBuffer()
+        .then((buf) => runTakImport(["--package"], new Uint8Array(buf), "require"))
         .then((payload) => {
             const target = payload.cot_url || "TAK Server";
             setStatus(el, "Imported " + target + "; Charontak forwarding updated.", true);
+            fileInput.value = "";
             showCurrentTls();
             refreshServices();
             refreshTakEnrollmentStatus();
@@ -264,20 +266,9 @@ function importEnrollmentUrl() {
         setStatus(el, "Enrollment URL must start with tak://.", false);
         return;
     }
-    const body = new FormData();
-    body.append("enrollment_url", enrollmentUrl);
     el.textContent = "Enrolling...";
     el.className = "aos-status";
-    fetch("/cgi-bin/aryaos-tak-dp-upload", {
-        method: "POST",
-        body,
-        credentials: "same-origin",
-        cache: "no-store",
-    })
-        .then((r) => r.json().then((payload) => {
-            if (!r.ok || !payload.ok) throw new Error(payload.error || ("HTTP " + r.status));
-            return payload;
-        }))
+    runTakImport(["--enroll", enrollmentUrl], null, "require")
         .then((payload) => {
             const target = payload.cot_url || "TAK Server";
             setStatus(el, "Enrolled " + target + "; Charontak forwarding updated.", true);
