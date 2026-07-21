@@ -25,6 +25,8 @@ contents:
     dst: /usr/share/cockpit/aryaos/aryaos.css
   - src: ./aryaos.js
     dst: /usr/share/cockpit/aryaos/aryaos.js
+  - src: ./aryaos-basemap.js
+    dst: /usr/share/cockpit/aryaos/aryaos-basemap.js
   - src: ./index.html
     dst: /usr/share/cockpit/aryaos/index.html
   - src: ./manifest.json

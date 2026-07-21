@@ -19,6 +19,23 @@ SPDX-License-Identifier: Apache-2.0
       inherited by every sensor gateway (per-service overrides live in each tool's own
       Cockpit page). Changes apply on <em>Save &amp; restart sensors</em>.</p>
 
+    <section class="aos-card aos-card-location" id="card-location">
+      <div class="aos-section-head">
+        <h2>Location</h2>
+        <button class="aos-icon-btn" id="btn-loc-refresh" title="Refresh position" aria-label="Refresh position">&#8635;</button>
+      </div>
+      <p class="aos-hint">Where this unit is right now &mdash; a single snapshot from gpsd, or the
+        configured static position if there is no fix. Offline base map (North America); no tiles
+        are fetched.</p>
+      <div class="aos-map" id="loc-map">
+        <div class="aos-map-empty" id="loc-map-empty">Acquiring position&hellip;</div>
+      </div>
+      <div class="aos-map-meta">
+        <span class="aos-map-coords" id="loc-coords">&mdash;</span>
+        <span class="aos-map-src" id="loc-source"></span>
+      </div>
+    </section>
+
     <section class="aos-card" id="card-config">
       <h2>TAK destination</h2>
       <label>Site COT_URL
@@ -344,6 +361,7 @@ SPDX-License-Identifier: Apache-2.0
         everything else, including comments.</p>
     </details>
   </main>
+  <script src="aryaos-basemap.js"></script>
   <script src="aryaos.js"></script>
 </body>
 </html>
