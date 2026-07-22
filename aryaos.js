@@ -1349,3 +1349,102 @@ $("btn-loc-refresh").addEventListener("click", refreshLocation);
 buildLocationMap();
 refreshLocation();
 setInterval(refreshLocation, 15000);
+
+/* --- Power health: decode `vcgencmd get_throttled` and warn on under-voltage ---
+ * The Pi 5 wants a 5V/5A (27W) supply; on a weaker one (e.g. a big GaN charger
+ * that only does 5V/3A) it browns out under SDR + CPU load. Bit meanings match
+ * /usr/local/sbin/get_throttled.sh. No superuser needed if pi is in `video`. */
+const THROTTLE_LABELS = {
+    0: "Under-voltage detected",
+    1: "Arm frequency capped",
+    2: "Currently throttled",
+    3: "Soft temperature limit active",
+    16: "Under-voltage has occurred",
+    17: "Arm frequency capping has occurred",
+    18: "Throttling has occurred",
+    19: "Soft temperature limit has occurred",
+};
+const POWER_FIX = "The Raspberry Pi 5 needs a 5V/5A (27 W) USB-C PD supply. " +
+    "High-wattage GaN chargers often provide only 5V/3A, which browns out under SDR + CPU load.";
+function decodeThrottle(hex) {
+    const v = parseInt(hex, 16) || 0;
+    const active = [], past = [];
+    [0, 1, 2, 3].forEach((b) => { if (v & (1 << b)) active.push(THROTTLE_LABELS[b]); });
+    [16, 17, 18, 19].forEach((b) => { if (v & (1 << b)) past.push(THROTTLE_LABELS[b]); });
+    return { active, past };
+}
+function renderPowerHealth(text) {
+    const pill = $("power-pill"), warn = $("power-warn");
+    if (!pill || !warn) return;
+    if (!text || !/throttled=0x/i.test(text)) {
+        pill.textContent = "Power: status unavailable";
+        pill.className = "aos-power-pill unknown";
+        warn.hidden = true;
+        return;
+    }
+    const d = decodeThrottle(text.split("=")[1]);
+    if (d.active.length) {
+        pill.textContent = "Power: under-voltage / throttled";
+        pill.className = "aos-power-pill bad";
+        warn.className = "aos-power-warn bad";
+        warn.textContent = "⚠ " + d.active.join("; ") + ". " + POWER_FIX;
+        warn.hidden = false;
+    } else if (d.past.length) {
+        pill.textContent = "Power: warning since boot";
+        pill.className = "aos-power-pill warn";
+        warn.className = "aos-power-warn warn";
+        warn.textContent = "⚠ " + d.past.join("; ") + " since boot. " + POWER_FIX;
+        warn.hidden = false;
+    } else {
+        pill.textContent = "Power: OK";
+        pill.className = "aos-power-pill ok";
+        warn.hidden = true;
+    }
+}
+function refreshPowerHealth() {
+    cockpit.spawn(["vcgencmd", "get_throttled"], { superuser: "try", err: "message" })
+        .then((out) => renderPowerHealth((out || "").trim()))
+        .catch(() => renderPowerHealth(null));
+}
+$("btn-loc-refresh").addEventListener("click", refreshPowerHealth);
+refreshPowerHealth();
+setInterval(refreshPowerHealth, 15000);
+
+/* --- Safe mode: brownout / crash-loop fail-safe banner + restore controls ---
+ * Reads `aryaos-safe-mode status`; when the box has latched safe mode (USB
+ * peripherals off, sensors withheld), show a prominent banner and let the admin
+ * hot-restore or restore-and-reboot. */
+function renderSafeMode(out) {
+    const banner = $("safe-mode-banner");
+    if (!banner) return;
+    const on = /safe-mode:\s*ON/i.test(out || "");
+    banner.hidden = !on;
+    if (on) {
+        const m = (out || "").match(/reason:\s*(.+)/i);
+        $("safe-mode-reason").textContent = m ? m[1].trim() : "";
+    }
+}
+function refreshSafeMode() {
+    cockpit.spawn(["aryaos-safe-mode", "status"], { superuser: "try", err: "message" })
+        .then(renderSafeMode)
+        .catch(() => { const b = $("safe-mode-banner"); if (b) b.hidden = true; });
+}
+function exitSafeMode(reboot) {
+    const st = $("safe-mode-status");
+    setStatus(st, reboot ? "Clearing safe mode and rebooting…" : "Restoring — re-powering USB and sensors…", true);
+    $("btn-safe-restore").disabled = true;
+    $("btn-safe-restore-reboot").disabled = true;
+    cockpit.spawn(["aryaos-safe-mode", "off"].concat(reboot ? ["--reboot"] : []),
+        { superuser: "require", err: "message" })
+        .then(() => { if (!reboot) { setStatus(st, "Restored — USB re-powered, sensors restarting.", true); refreshSafeMode(); } })
+        .catch((ex) => setStatus(st, "Failed: " + (ex.message || ex), false))
+        .finally(() => {
+            if (!reboot) { $("btn-safe-restore").disabled = false; $("btn-safe-restore-reboot").disabled = false; }
+        });
+}
+$("btn-safe-restore").addEventListener("click", () => exitSafeMode(false));
+$("btn-safe-restore-reboot").addEventListener("click", () => {
+    if (window.confirm("Reboot the box to restore from safe mode?")) exitSafeMode(true);
+});
+refreshSafeMode();
+setInterval(refreshSafeMode, 15000);

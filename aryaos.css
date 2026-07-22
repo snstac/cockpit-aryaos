@@ -389,6 +389,82 @@ body {
   }
 }
 
+/* --- Safe-mode banner (brownout / crash-loop fail-safe) --- */
+.aos-safebanner {
+  margin: 1rem 0;
+  padding: clamp(1rem, 2vw, 1.3rem);
+  border: 1px solid var(--aos-danger);
+  border-left: 5px solid var(--aos-danger);
+  border-radius: 8px;
+  background: rgba(255, 138, 122, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+}
+
+.aos-safebanner h2 {
+  margin-top: 0;
+  color: var(--aos-danger);
+}
+
+.aos-safebanner-reason {
+  margin: 0.2rem 0 0.6rem;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-weight: 650;
+}
+
+/* --- Power health indicator (reads vcgencmd get_throttled) --- */
+.aos-power {
+  margin-top: 0.6rem;
+}
+
+.aos-power-pill {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--aos-border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.aos-power-pill.ok {
+  color: var(--aos-ok);
+  border-color: rgba(116, 216, 164, 0.5);
+}
+
+.aos-power-pill.unknown {
+  color: var(--aos-muted);
+}
+
+.aos-power-pill.warn {
+  color: #ffd27a;
+  border-color: rgba(255, 210, 122, 0.55);
+}
+
+.aos-power-pill.bad {
+  color: var(--aos-accent-ink);
+  background: var(--aos-danger);
+  border-color: var(--aos-danger);
+}
+
+.aos-power-warn {
+  margin-top: 0.55rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.aos-power-warn.bad {
+  border: 1px solid var(--aos-danger);
+  background: rgba(255, 138, 122, 0.14);
+  color: var(--aos-ink);
+}
+
+.aos-power-warn.warn {
+  border: 1px solid rgba(255, 210, 122, 0.55);
+  background: rgba(255, 210, 122, 0.12);
+  color: var(--aos-ink);
+}
+
 @media (max-width: 760px) {
   .aos-card {
     margin-inline: -0.25rem;
