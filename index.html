@@ -19,6 +19,20 @@ SPDX-License-Identifier: Apache-2.0
       inherited by every sensor gateway (per-service overrides live in each tool's own
       Cockpit page). Changes apply on <em>Save &amp; restart sensors</em>.</p>
 
+    <section class="aos-safebanner" id="safe-mode-banner" hidden>
+      <h2>&#9888; Safe mode active</h2>
+      <p class="aos-safebanner-reason" id="safe-mode-reason"></p>
+      <p>The box latched <strong>safe mode</strong> after repeated crash-reboots &mdash; USB peripherals
+        are powered off and the sensor services are stopped so it stays reachable. This almost always
+        means the power supply cannot sustain the load; the Raspberry&nbsp;Pi&nbsp;5 needs a 5V/5A (27&nbsp;W)
+        supply, or a PoE+ (802.3at) source for the PoE HAT. Fit an adequate supply, then restore.</p>
+      <div class="aos-actions-inline">
+        <button class="aos-btn aos-primary aos-btn-big" id="btn-safe-restore">Restore now</button>
+        <button class="aos-btn aos-btn-big" id="btn-safe-restore-reboot">Restore &amp; reboot</button>
+      </div>
+      <span id="safe-mode-status" class="aos-status"></span>
+    </section>
+
     <section class="aos-card aos-card-location" id="card-location">
       <div class="aos-section-head">
         <h2>Location</h2>
@@ -33,6 +47,10 @@ SPDX-License-Identifier: Apache-2.0
       <div class="aos-map-meta">
         <span class="aos-map-coords" id="loc-coords">&mdash;</span>
         <span class="aos-map-src" id="loc-source"></span>
+      </div>
+      <div class="aos-power" id="power-health">
+        <span class="aos-power-pill unknown" id="power-pill">Power: checking&hellip;</span>
+        <div class="aos-power-warn" id="power-warn" hidden></div>
       </div>
     </section>
 
