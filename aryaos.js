@@ -1401,10 +1401,34 @@ function renderPowerHealth(text) {
         warn.hidden = true;
     }
 }
+/* Live input 5V-rail voltage (vcgencmd pmic_read_adc EXT5V_V) — the most direct
+ * supply-margin measure: ~5.0V under load is healthy; sag toward the ~4.63V
+ * under-voltage trip means a marginal supply/cable. Not on all firmware. */
+function parseRailVolts(text) {
+    const m = (text || "").match(/EXT5V_V.*?=\s*([\d.]+)/i);
+    return m ? parseFloat(m[1]) : null;
+}
+function renderRailVolts(text) {
+    const el = $("power-volts");
+    if (!el) return;
+    const v = parseRailVolts(text);
+    if (v == null || !isFinite(v)) { el.textContent = ""; el.className = "aos-power-volts"; return; }
+    let cls = "ok";
+    if (v < 4.75) cls = "bad"; else if (v < 4.9) cls = "warn";
+    el.textContent = "5V rail " + v.toFixed(2) + " V";
+    el.className = "aos-power-volts " + cls;
+    el.title = "Input 5V rail (vcgencmd pmic_read_adc EXT5V_V). ~5.0 V is healthy; " +
+        "below 4.75 V is marginal — expect brownouts under load. Best checked under load.";
+}
 function refreshPowerHealth() {
-    cockpit.spawn(["vcgencmd", "get_throttled"], { superuser: "try", err: "message" })
-        .then((out) => renderPowerHealth((out || "").trim()))
-        .catch(() => renderPowerHealth(null));
+    cockpit.spawn(["sh", "-c", "vcgencmd get_throttled; echo '==='; vcgencmd pmic_read_adc EXT5V_V 2>/dev/null || true"],
+        { superuser: "try", err: "message" })
+        .then((out) => {
+            const parts = (out || "").split("===");
+            renderPowerHealth((parts[0] || "").trim());
+            renderRailVolts((parts[1] || "").trim());
+        })
+        .catch(() => { renderPowerHealth(null); renderRailVolts(null); });
 }
 $("btn-loc-refresh").addEventListener("click", refreshPowerHealth);
 refreshPowerHealth();
