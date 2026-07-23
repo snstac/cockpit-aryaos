@@ -445,6 +445,26 @@ body {
   border-color: var(--aos-danger);
 }
 
+.aos-power-volts {
+  margin-left: 0.55rem;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--aos-muted);
+}
+
+.aos-power-volts.ok {
+  color: var(--aos-ok);
+}
+
+.aos-power-volts.warn {
+  color: #ffd27a;
+}
+
+.aos-power-volts.bad {
+  color: var(--aos-danger);
+}
+
 .aos-power-warn {
   margin-top: 0.55rem;
   padding: 0.6rem 0.7rem;
