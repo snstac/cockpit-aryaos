@@ -152,6 +152,21 @@ SPDX-License-Identifier: Apache-2.0
       <span id="radios-status" class="aos-status"></span>
     </section>
 
+    <section class="aos-card" id="card-antsdr" hidden>
+      <div class="aos-section-head">
+        <h2>AntSDR (DJI DroneID)</h2>
+        <button class="aos-icon-btn" id="btn-antsdr-refresh" title="Re-check AntSDR" aria-label="Re-check AntSDR">&#8635;</button>
+      </div>
+      <p class="aos-hint">An AntSDR E200 running the DJI DroneID firmware pushes detections over
+        Ethernet to dronecot (TCP&nbsp;:52002). Its USB-serial is the config/recovery console
+        (<code>aryaos-antsdr-console</code>, login <code>root&nbsp;/&nbsp;analog</code>) &mdash; not a
+        data feed. This card appears only when an AntSDR is detected on the link.</p>
+      <div class="aos-power" id="antsdr-health">
+        <span class="aos-power-pill unknown" id="antsdr-pill">AntSDR: checking&hellip;</span>
+        <div class="aos-power-warn" id="antsdr-warn" hidden></div>
+      </div>
+    </section>
+
     <section class="aos-card" id="card-tls">
       <h2>Site-wide TAK TLS certificates</h2>
       <p class="aos-hint">Upload once; every PyTAK gateway inherits
