@@ -1472,3 +1472,38 @@ $("btn-safe-restore-reboot").addEventListener("click", () => {
 });
 refreshSafeMode();
 setInterval(refreshSafeMode, 15000);
+
+/* --- AntSDR (DJI DroneID) feed health ---
+ * An AntSDR E200 (alphafox02 firmware) pushes DJI DroneID to dronecot over
+ * Ethernet (:52002); its USB-serial is only the config console. `aryaos-antsdr
+ * -health --json` reports whether the SDR is reachable and the feed socket is
+ * established. The card stays hidden on boxes with no AntSDR (status "down"). */
+function renderAntsdrHealth(json) {
+    const card = $("card-antsdr"), pill = $("antsdr-pill"), warn = $("antsdr-warn");
+    if (!card || !pill || !warn) return;
+    let d = null;
+    try { d = json ? JSON.parse(json) : null; } catch (e) { d = null; }
+    if (!d || d.status === "down") { card.hidden = true; return; }  // no AntSDR here
+    card.hidden = false;
+    if (d.status === "ok") {
+        pill.textContent = "AntSDR: DroneID feed active (" + d.antsdr_ip + " → :" + d.feed_port + ")";
+        pill.className = "aos-power-pill ok";
+        warn.hidden = true;
+    } else {  // degraded: reachable but no feed
+        pill.textContent = "AntSDR: reachable, no DroneID feed";
+        pill.className = "aos-power-pill warn";
+        warn.className = "aos-power-warn warn";
+        warn.textContent = "⚠ " + d.antsdr_ip + " is up but not pushing DroneID on :" +
+            d.feed_port + ". Normal if no DJI drone is in range; if one is present the AntSDR " +
+            "app may be stalled — open the console with aryaos-antsdr-console (login root/analog).";
+        warn.hidden = false;
+    }
+}
+function refreshAntsdrHealth() {
+    cockpit.spawn(["aryaos-antsdr-health", "--json", "--quiet"], { superuser: "try", err: "message" })
+        .then(renderAntsdrHealth)
+        .catch(() => renderAntsdrHealth(null));
+}
+$("btn-antsdr-refresh").addEventListener("click", refreshAntsdrHealth);
+refreshAntsdrHealth();
+setInterval(refreshAntsdrHealth, 15000);
