@@ -1305,6 +1305,35 @@ function locBestTpv(out) {
     });
     return best;
 }
+/* Satellite / DOP quality from the gpsd SKY report (nerdy GPS). */
+function locSky(out) {
+    let sky = null;
+    (out || "").split("\n").forEach((line) => {
+        line = line.trim();
+        if (!line) return;
+        let o;
+        try { o = JSON.parse(line); } catch (e) { return; }
+        if (o.class === "SKY") sky = o;
+    });
+    return sky;
+}
+/* Render the nerdy GPS line: fix, sats used/seen, HDOP, speed, altitude. */
+function showGpsDetail(tpv, sky) {
+    const el = $("loc-gps");
+    if (!el) return;
+    if (!tpv) { el.textContent = ""; el.hidden = true; return; }
+    const parts = [];
+    const mode = Number(tpv.mode || 0);
+    parts.push(mode >= 3 ? "3D fix" : mode >= 2 ? "2D fix" : "no fix");
+    if (sky && sky.uSat != null) parts.push(sky.uSat + "/" + (sky.nSat != null ? sky.nSat : "?") + " sats");
+    const hdop = (sky && sky.hdop != null) ? sky.hdop : tpv.hdop;
+    if (hdop != null) parts.push("HDOP " + Number(hdop).toFixed(1));
+    if (tpv.altHAE != null || tpv.altMSL != null)
+        parts.push((Number(tpv.altHAE != null ? tpv.altHAE : tpv.altMSL)).toFixed(0) + " m");
+    if (tpv.speed != null) parts.push((Number(tpv.speed)).toFixed(1) + " m/s");
+    el.textContent = parts.join(" · ");
+    el.hidden = false;
+}
 function showLocation(lat, lon, source) {
     const coordsEl = $("loc-coords"), srcEl = $("loc-source"), emptyEl = $("loc-map-empty");
     const marker = $("loc-marker");
@@ -1337,13 +1366,14 @@ function locStaticFallback() {
 }
 function refreshLocation() {
     buildLocationMap();
-    cockpit.spawn(["gpspipe", "--json", "-n", "8"], { err: "message" })
+    cockpit.spawn(["gpspipe", "--json", "-n", "12"], { err: "message" })
         .then((out) => {
             const t = locBestTpv(out);
-            if (!t) { locStaticFallback(); return; }
+            if (!t) { showGpsDetail(null); locStaticFallback(); return; }
             showLocation(t.lat, t.lon, t.mode >= 3 ? "GPS fix (3D)" : "GPS fix (2D)");
+            showGpsDetail(t, locSky(out));
         })
-        .catch(() => locStaticFallback());
+        .catch(() => { showGpsDetail(null); locStaticFallback(); });
 }
 $("btn-loc-refresh").addEventListener("click", refreshLocation);
 buildLocationMap();
