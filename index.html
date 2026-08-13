@@ -57,28 +57,38 @@ SPDX-License-Identifier: Apache-2.0
     </section>
 
     <section class="aos-card" id="card-config">
-      <h2>TAK destination</h2>
-      <label>Site COT_URL
-        <input type="text" id="cot-url" placeholder="udp+wo://127.0.0.1:28087">
+      <h2>Global CoT output</h2>
+      <label>Primary site output URL
+        <input type="text" id="cot-output-url" placeholder="udp+wo://239.2.3.1:6969">
       </label>
-      <p class="aos-hint">Default feeds the local Charontak hub; Charontak forwards to Mesh SA
-        and/or a TAK Server (see Charontak lanes). Direct examples:
-        <code>tls://takserver.example.com:8089</code>, <code>udp+wo://239.2.3.1:6969</code>.</p>
+      <p class="aos-hint">Where COTBridge sends the combined site feed. Local gateways always
+        write to the private COTBridge lane at <code>udp+wo://127.0.0.1:28087</code>.
+        Use the COTBridge page only for advanced additional lanes.</p>
+    </section>
+
+    <section class="aos-card" id="card-adsb">
+      <h2>ADS-B</h2>
       <label>ADS-B decoder
         <select id="adsb-decoder">
           <option value="readsb">readsb (RTL-SDR / SoapySDR / HackRF)</option>
           <option value="dump1090_fa">dump1090-fa (FlightAware)</option>
         </select>
       </label>
-      <label>UAT (978 MHz) RTL-SDR serial
-        <input type="text" id="uat-serial" placeholder="stx:978:0">
+      <label>1090 MHz source
+        <select id="adsb-1090-source"><option value="auto">Auto detect</option><option value="adsbee">ADSBee</option><option value="sdr">SDR</option></select>
+      </label>
+      <label>1090 MHz device identity
+        <input type="text" id="adsb-1090-device" placeholder="Auto, stable serial, or /dev/serial/by-id/...">
+      </label>
+      <label>978 MHz device
+        <input type="text" id="uat-978-device" placeholder="auto, off, or RTL-SDR serial">
       </label>
     </section>
 
     <section class="aos-card" id="card-role">
       <h2>Device role</h2>
-      <p class="aos-hint">Choose which sensor pipelines run on this unit. The CoT core (Charontak,
-        LINCOT, GPSTAK, gpsd) always runs; the role enables its sensor services at boot and stops
+      <p class="aos-hint">Choose which sensor pipelines run on this unit. The CoT core (COTBridge,
+        LINCOT, GPSCOT, gpsd) always runs; the role enables its sensor services at boot and stops
         the rest.</p>
       <label>Role
         <select id="role-select">
@@ -190,7 +200,7 @@ SPDX-License-Identifier: Apache-2.0
 
     <section class="aos-card" id="card-dp">
       <h2>TAK connection</h2>
-      <p class="aos-hint">Import an ATAK/iTAK connection data package or paste a one-time TAK Server enrollment URL. AryaOS installs the certs under <code>/etc/aryaos/tls</code> and enables Charontak forwarding to the TAK Server.</p>
+      <p class="aos-hint">Import an ATAK/iTAK connection data package or paste a one-time TAK Server enrollment URL. AryaOS installs the certs under <code>/etc/aryaos/tls</code> and enables COTBridge forwarding to the TAK Server.</p>
       <table class="aos-table aos-status-table" id="tak-enrollment-table"><tbody></tbody></table>
       <div class="aos-upload-row">
         <label class="aos-file-label">One-time enrollment URL
@@ -289,7 +299,7 @@ SPDX-License-Identifier: Apache-2.0
     <section class="aos-card" id="card-backup">
       <h2>Backup &amp; restore</h2>
       <p class="aos-hint">Save the full device configuration — site settings, TAK certificates,
-        Charontak lanes, per-gateway settings, network, and Node-RED — to a restorable archive.
+        COTBridge lanes, per-gateway settings, network, and Node-RED — to a restorable archive.
         Use it to migrate to a replacement box or keep a golden config.</p>
       <div class="aos-row">
         <label class="aos-check"><input type="checkbox" id="backup-secrets" checked> Include private keys &amp; Wi-Fi passwords
@@ -332,7 +342,7 @@ SPDX-License-Identifier: Apache-2.0
 
       <h3>Factory reset</h3>
       <p class="aos-hint">Restores AryaOS to factory defaults — clears site config, TAK certificates,
-        Charontak lanes, and device identity, then re-runs first-boot setup. Keeps the OS, installed
+        COTBridge lanes, and device identity, then re-runs first-boot setup. Keeps the OS, installed
         packages, and (by default) the current Wi-Fi so a remote box is not stranded.</p>
       <div class="aos-row">
         <label class="aos-check"><input type="checkbox" id="reset-wipe-network"> Also remove saved Wi-Fi networks &amp; hotspot password</label>

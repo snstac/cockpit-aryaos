@@ -30,7 +30,7 @@ matching Cockpit plugin for browser-based management:
 | Own position via GPS/GNSS | [lincot](https://github.com/snstac/lincot) | [cockpit-lincot](https://github.com/snstac/cockpit-lincot), [cockpit-gps](https://github.com/snstac/cockpit-gps) |
 | APRS amateur radio | [aprscot](https://github.com/snstac/aprscot) | — |
 | Weather stations | [windtak](https://github.com/snstac/windtak) | — |
-| CoT routing / TAK Server bridging | [charontak](https://github.com/snstac/charontak) | — |
+| CoT routing / TAK Server bridging | [cotbridge](https://github.com/snstac/cotbridge) | — |
 
 All gateways are built on [PyTAK](https://github.com/snstac/pytak), speak
 **Cursor on Target (CoT)** to **ATAK, WinTAK, iTAK, TAK Server, and Mesh SA**, ship as
