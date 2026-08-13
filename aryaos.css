@@ -1,17 +1,17 @@
 /* AryaOS Site cockpit plugin. SPDX-License-Identifier: Apache-2.0 */
 :root {
-  color-scheme: dark;
-  --aos-bg: #071211;
-  --aos-panel: #122322;
-  --aos-panel-2: #172c2a;
-  --aos-ink: #edf7f4;
-  --aos-muted: #9bb2ad;
-  --aos-border: rgba(124, 170, 160, 0.28);
-  --aos-accent: #35a58f;
-  --aos-accent-dark: #6ed4be;
-  --aos-accent-ink: #071211;
-  --aos-danger: #ff8a7a;
-  --aos-ok: #74d8a4;
+  color-scheme: light;
+  --aos-bg: #f4f8f7;
+  --aos-panel: #ffffff;
+  --aos-panel-2: #edf5f3;
+  --aos-ink: #102824;
+  --aos-muted: #526b66;
+  --aos-border: rgba(28, 91, 79, 0.24);
+  --aos-accent: #147a68;
+  --aos-accent-dark: #0d5b4e;
+  --aos-accent-ink: #ffffff;
+  --aos-danger: #b42318;
+  --aos-ok: #137a48;
 }
 
 * {
@@ -21,7 +21,7 @@
 body {
   margin: 0;
   background:
-    linear-gradient(180deg, rgba(53, 165, 143, 0.16), rgba(7, 18, 17, 0) 18rem),
+    linear-gradient(180deg, rgba(53, 165, 143, 0.13), rgba(244, 248, 247, 0) 18rem),
     var(--aos-bg);
   color: var(--aos-ink);
   font-family: "RedHatText", "Open Sans", Helvetica, Arial, sans-serif;

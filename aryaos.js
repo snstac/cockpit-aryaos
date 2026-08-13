@@ -14,7 +14,10 @@ const TLS_DIR = "/etc/aryaos/tls";
 const TLS_GROUP = "tak-certs";
 // Gateways shown in the services card and restarted on save. AOS_SERVICES in
 // the site config wins when set.
-const DEFAULT_SERVICES = ["charontak", "adsbcot", "aiscot", "dronecot", "lincot", "readsb", "ais-catcher"];
+const DEFAULT_SERVICES = ["cotbridge", "adsbcot", "aiscot", "dronecot", "lincot", "readsb", "ais-catcher"];
+
+// Operational state belongs at the top of the cockpit, ahead of configuration.
+document.querySelector(".aos-main").insertBefore($("card-services"), $("card-location"));
 
 const $ = (id) => document.getElementById(id);
 const configFile = cockpit.file(CONFIG_PATH, { superuser: "try" });
@@ -48,19 +51,24 @@ function serviceList(text) {
 
 /* --- Config card --- */
 function renderForm(text) {
-    $("cot-url").value = getKey(text, "COT_URL") || "";
+    $("cot-output-url").value = getKey(text, "ARYAOS_COT_OUTPUT_URL") || "udp+wo://239.2.3.1:6969";
     const dec = getKey(text, "ARYAOS_ADSB_DECODER");
     if (dec) $("adsb-decoder").value = dec;
-    $("uat-serial").value = getKey(text, "ARYAOS_UAT_RTL_SERIAL") || "";
+    $("adsb-1090-source").value = getKey(text, "ARYAOS_ADSB_1090_SOURCE") || "auto";
+    $("adsb-1090-device").value = getKey(text, "ARYAOS_ADSB_1090_DEVICE") || "";
+    $("uat-978-device").value = getKey(text, "ARYAOS_UAT_978_DEVICE") || "auto";
     $("tls-dont-verify").checked = (getKey(text, "PYTAK_TLS_DONT_VERIFY") || "") === "1";
     $("raw-config").value = text;
 }
 
 function collectForm(text) {
     let out = $("raw-config").value !== configText ? $("raw-config").value : text;
-    out = setKey(out, "COT_URL", $("cot-url").value.trim());
+    out = setKey(out, "COT_URL", "udp+wo://127.0.0.1:28087");
+    out = setKey(out, "ARYAOS_COT_OUTPUT_URL", $("cot-output-url").value.trim());
     if ($("adsb-decoder").value) out = setKey(out, "ARYAOS_ADSB_DECODER", $("adsb-decoder").value);
-    if ($("uat-serial").value.trim()) out = setKey(out, "ARYAOS_UAT_RTL_SERIAL", $("uat-serial").value.trim());
+    out = setKey(out, "ARYAOS_ADSB_1090_SOURCE", $("adsb-1090-source").value);
+    out = setKey(out, "ARYAOS_ADSB_1090_DEVICE", $("adsb-1090-device").value.trim());
+    out = setKey(out, "ARYAOS_UAT_978_DEVICE", $("uat-978-device").value.trim() || "auto");
     if ($("tls-dont-verify").checked) out = setKey(out, "PYTAK_TLS_DONT_VERIFY", "1");
     else if (getKey(out, "PYTAK_TLS_DONT_VERIFY") !== null) out = setKey(out, "PYTAK_TLS_DONT_VERIFY", "0");
     return out;
@@ -69,7 +77,9 @@ function collectForm(text) {
 function saveConfig(restart) {
     const next = collectForm(configText);
     const el = $("save-status");
-    cockpit.file(CONFIG_PATH, { superuser: "require" }).replace(next)
+    cockpit.spawn(["/usr/local/sbin/aryaos-site-output", $("cot-output-url").value.trim()],
+        { superuser: "require", err: "message" })
+        .then(() => cockpit.file(CONFIG_PATH, { superuser: "require" }).replace(next))
         .then(() => {
             configText = next;
             renderForm(next);
@@ -245,7 +255,7 @@ function importDataPackage() {
         .then((buf) => runTakImport(["--package"], new Uint8Array(buf), "require"))
         .then((payload) => {
             const target = payload.cot_url || "TAK Server";
-            setStatus(el, "Imported " + target + "; Charontak forwarding updated.", true);
+            setStatus(el, "Imported " + target + "; COTBridge forwarding updated.", true);
             fileInput.value = "";
             showCurrentTls();
             refreshServices();
@@ -271,7 +281,7 @@ function importEnrollmentUrl() {
     runTakImport(["--enroll", enrollmentUrl], null, "require")
         .then((payload) => {
             const target = payload.cot_url || "TAK Server";
-            setStatus(el, "Enrolled " + target + "; Charontak forwarding updated.", true);
+            setStatus(el, "Enrolled " + target + "; COTBridge forwarding updated.", true);
             input.value = "";
             showCurrentTls();
             refreshServices();

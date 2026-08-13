@@ -12,8 +12,8 @@ vendor: "Sensors & Signals LLC"
 homepage: https://github.com/snstac/cockpit-aryaos
 license: Apache-2.0
 description: |
-  Cockpit web console plugin for AryaOS site-wide TAK administration:
-  site COT_URL, TAK TLS certificates, sensor fleet control, and
+  Cockpit web console plugin for AryaOS site-wide CoT administration:
+  COTBridge output, TAK TLS certificates, sensor fleet control, and
   nearby AryaOS node discovery.
 
 depends:
