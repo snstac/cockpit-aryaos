@@ -18,6 +18,7 @@ jobs:
       - name: Validate plugin files
         run: |
           node --check *.js
+          node --test tests/*.test.js
           python3 -c "import json; json.load(open('manifest.json'))"
 
       - name: Install nfpm

@@ -16,12 +16,12 @@ const TLS_GROUP = "tak-certs";
 // the site config wins when set.
 const DEFAULT_SERVICES = ["cotbridge", "adsbcot", "aiscot", "dronecot", "lincot", "readsb", "ais-catcher"];
 
-// Operational state belongs at the top of the cockpit, ahead of configuration.
-document.querySelector(".aos-main").insertBefore($("card-services"), $("card-location"));
-
 const $ = (id) => document.getElementById(id);
 const configFile = cockpit.file(CONFIG_PATH, { superuser: "try" });
 let configText = "";
+
+// Operational state belongs at the top of the cockpit, ahead of configuration.
+document.querySelector(".aos-main").insertBefore($("card-services"), $("card-location"));
 
 function setStatus(el, msg, ok) {
     el.textContent = msg;
@@ -278,7 +278,9 @@ function importEnrollmentUrl() {
     }
     el.textContent = "Enrolling...";
     el.className = "aos-status";
-    runTakImport(["--enroll", enrollmentUrl], null, "require")
+    // Send the one-time credential over stdin so it never appears in argv or
+    // process listings on the appliance.
+    runTakImport(["--enroll-stdin"], enrollmentUrl, "require")
         .then((payload) => {
             const target = payload.cot_url || "TAK Server";
             setStatus(el, "Enrolled " + target + "; COTBridge forwarding updated.", true);
@@ -1376,7 +1378,10 @@ function locStaticFallback() {
 }
 function refreshLocation() {
     buildLocationMap();
-    cockpit.spawn(["gpspipe", "--json", "-n", "12"], { err: "message" })
+    // gpspipe starts with VERSION/DEVICE/WATCH, then emits TPV/SKY. Eight
+    // reports retain both position and satellite detail while avoiding the
+    // extra reporting cycles that made an already-fixed receiver look slow.
+    cockpit.spawn(["gpspipe", "--json", "-n", "8"], { err: "message" })
         .then((out) => {
             const t = locBestTpv(out);
             if (!t) { showGpsDetail(null); locStaticFallback(); return; }
