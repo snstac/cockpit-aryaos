@@ -7,7 +7,10 @@ site-wide TAK TLS certificates once** (`PYTAK_TLS_CLIENT_CERT/KEY/CAFILE` in
 `/etc/aryaos/aryaos-config.txt`, inherited by every PyTAK gateway) — then restart the
 sensor fleet with one click. The page also shows nearby AryaOS nodes heard over Mesh SA,
 including roles, health, position status, and admin links. Per-tool tweaks live in each
-gateway's own Cockpit plugin.
+gateway's own Cockpit plugin. Its networking controls include the optional
+DHCP-less Ethernet **MANET fallback (IPv4LL)** setting; DHCP remains preferred and
+the change waits for the next Ethernet activation so the current admin session is
+never deliberately disconnected.
 
 ## Install
 

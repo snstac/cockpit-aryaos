@@ -686,6 +686,40 @@ function setHotspotPassword(password) {
         .catch((ex) => setStatus(el, "Failed: " + (ex.message || ex), false));
 }
 
+/* --- DHCP-less Ethernet / MANET IPv4LL fallback --- */
+function refreshIpv4ll() {
+    const detail = $("ipv4ll-detail");
+    cockpit.spawn(["aryaos-ipv4ll", "status", "--json"],
+        { superuser: "try", err: "message" })
+        .then((out) => {
+            const data = JSON.parse(out || "{}");
+            $("ipv4ll-enabled").checked = Boolean(data.enabled);
+            const profiles = Number(data.eligible_profiles || 0);
+            const pending = Array.isArray(data.pending_profiles) ? data.pending_profiles : [];
+            detail.textContent = profiles + " eligible Ethernet profile" +
+                (profiles === 1 ? "" : "s") + (pending.length
+                    ? "; pending next activation: " + pending.join(", ")
+                    : "; configuration is ready.");
+        })
+        .catch((ex) => {
+            detail.textContent = "IPv4LL helper unavailable: " + (ex.message || ex);
+        });
+}
+
+function applyIpv4ll() {
+    const enabled = $("ipv4ll-enabled").checked;
+    const action = enabled ? "enable" : "disable";
+    const status = $("ipv4ll-status");
+    setStatus(status, "Saving…", true);
+    cockpit.spawn(["aryaos-ipv4ll", action],
+        { superuser: "require", err: "message" })
+        .then((out) => {
+            setStatus(status, out.trim() || "Setting saved.", true);
+            refreshIpv4ll();
+        })
+        .catch((ex) => setStatus(status, "Failed: " + (ex.message || ex), false));
+}
+
 /* --- Radio control & EMCON card (backed by /usr/local/sbin/aryaos-radio) --- */
 function refreshRadioControl() {
     cockpit.spawn(["aryaos-radio", "ap", "status"], { superuser: "try", err: "message" })
@@ -1189,6 +1223,8 @@ $("btn-hotspot-clear").addEventListener("click", () => {
     if (window.confirm("Remove the hotspot password? The onboarding AP will be open."))
         setHotspotPassword("");
 });
+$("btn-ipv4ll-apply").addEventListener("click", applyIpv4ll);
+refreshIpv4ll();
 $("btn-ap-toggle").addEventListener("click", toggleAP);
 $("btn-emcon-toggle").addEventListener("click", toggleEMCON);
 refreshRadioControl();

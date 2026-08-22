@@ -123,6 +123,21 @@ SPDX-License-Identifier: Apache-2.0
       <span id="hotspot-status" class="aos-status"></span>
     </section>
 
+    <section class="aos-card" id="card-ipv4ll">
+      <h2>MANET fallback (IPv4LL)</h2>
+      <p class="aos-hint">Keep wired Ethernet discoverable when it has carrier but no DHCP
+        server. AryaOS assigns an RFC&nbsp;3927 <code>169.254.x.x</code> address only while no
+        other IPv4 address is available; DHCP remains preferred. Changing this setting never
+        disconnects the current session and applies on the next Ethernet activation or reboot.</p>
+      <label class="aos-check"><input type="checkbox" id="ipv4ll-enabled">
+        Enable DHCP-less Ethernet fallback</label>
+      <div class="aos-actions-inline">
+        <button class="aos-btn" id="btn-ipv4ll-apply">Apply setting</button>
+      </div>
+      <span id="ipv4ll-status" class="aos-status"></span>
+      <div id="ipv4ll-detail" class="aos-hint"></div>
+    </section>
+
     <section class="aos-card" id="card-radio-control">
       <h2>Radio control &amp; EMCON</h2>
       <p class="aos-hint">Turn the Wi-Fi onboarding hotspot off once a unit is fielded on ethernet, or

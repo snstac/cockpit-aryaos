@@ -68,3 +68,15 @@ test("TAK enrollment sends one-time credentials over stdin", () => {
         "the legacy argv enrollment path must not be used by the UI"
     );
 });
+
+test("MANET fallback card uses the privileged AryaOS helper", () => {
+    const root = path.join(__dirname, "..");
+    const source = fs.readFileSync(path.join(root, "aryaos.js"), "utf8");
+    const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+
+    assert.match(html, /id="card-ipv4ll"/);
+    assert.match(html, /id="ipv4ll-enabled"/);
+    assert.match(source, /\["aryaos-ipv4ll", "status", "--json"\]/);
+    assert.match(source, /cockpit\.spawn\(\["aryaos-ipv4ll", action\]/);
+    assert.match(source, /superuser: "require"/);
+});
