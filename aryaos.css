@@ -305,6 +305,25 @@ body {
   background: #7c8784;
 }
 
+.aos-dot.degraded {
+  background: #f0ab00;
+}
+
+.aos-dot.unavailable,
+.aos-dot.disabled {
+  background: #8a8d90;
+}
+
+.aos-log-output {
+  background: #151515;
+  color: #f0f0f0;
+  max-height: 32rem;
+  min-height: 12rem;
+  overflow: auto;
+  padding: 1rem;
+  white-space: pre-wrap;
+}
+
 /* --- Location chip: offline North America base map --- */
 .aos-map {
   position: relative;

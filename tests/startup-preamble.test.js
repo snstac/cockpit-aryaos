@@ -80,3 +80,26 @@ test("MANET fallback card uses the privileged AryaOS helper", () => {
     assert.match(source, /cockpit\.spawn\(\["aryaos-ipv4ll", action\]/);
     assert.match(source, /superuser: "require"/);
 });
+
+test("site status uses the complete AryaOS health collector with a legacy fallback", () => {
+    const source = fs.readFileSync(path.join(__dirname, "..", "aryaos.js"), "utf8");
+    assert.match(source, /\["\/usr\/local\/sbin\/aryaos-health", "--json"\]/);
+    assert.match(source, /\.catch\(\(\) => refreshServicesFallback\(\)\)/);
+    assert.match(source, /health\.state \|\| "unknown"/);
+});
+
+test("every generic gateway page uses the fixed allowlist", () => {
+    const root = path.join(__dirname, "..");
+    const source = fs.readFileSync(path.join(root, "gateway.js"), "utf8");
+    const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
+    const expected = ["acarscot", "gdlcot", "sikw00fcot", "gutcheck"];
+
+    assert.deepEqual(Object.keys(manifest.tools), expected);
+    for (const service of expected) {
+        assert.match(source, new RegExp(service + ": \\{"));
+        assert.equal(manifest.tools[service].path, service + ".html");
+        const html = fs.readFileSync(path.join(root, service + ".html"), "utf8");
+        assert.match(html, new RegExp(`data-gateway="${service}"`));
+    }
+    assert.match(source, /const gateway = GATEWAYS\[requested\]/);
+});

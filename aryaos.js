@@ -294,10 +294,41 @@ function importEnrollmentUrl() {
 
 /* --- Services card --- */
 function refreshServices() {
-    const units = serviceList(configText);
+    cockpit.spawn(["/usr/local/sbin/aryaos-health", "--json"], {
+        superuser: "try",
+        err: "message",
+    })
+        .then((output) => {
+            const payload = JSON.parse(output);
+            renderServiceHealth(Array.isArray(payload.apps) ? payload.apps : []);
+        })
+        .catch(() => refreshServicesFallback());
+}
+
+function renderServiceHealth(apps) {
     const tbody = $("svc-table").querySelector("tbody");
     tbody.innerHTML = "";
-    units.forEach((u) => {
+    apps.forEach((item) => {
+        const tr = document.createElement("tr");
+        const dot = document.createElement("span");
+        const health = item.health || {};
+        const state = health.state || "unknown";
+        dot.className = "aos-dot " + state;
+        const tdDot = document.createElement("td");
+        tdDot.appendChild(dot);
+        tdDot.appendChild(document.createTextNode(item.app || "unknown"));
+        const tdState = document.createElement("td");
+        tdState.textContent = state + (health.detail ? ": " + health.detail : "");
+        tr.appendChild(tdDot);
+        tr.appendChild(tdState);
+        tbody.appendChild(tr);
+    });
+}
+
+function refreshServicesFallback() {
+    const tbody = $("svc-table").querySelector("tbody");
+    tbody.innerHTML = "";
+    serviceList(configText).forEach((u) => {
         const tr = document.createElement("tr");
         const dot = document.createElement("span");
         dot.className = "aos-dot unknown";

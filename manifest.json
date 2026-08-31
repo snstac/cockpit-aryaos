@@ -12,5 +12,23 @@
       ]
     }
   },
+  "tools": {
+    "acarscot": {
+      "label": "ACARS (ACARSCOT)",
+      "path": "acarscot.html"
+    },
+    "gdlcot": {
+      "label": "EFB Traffic (GDL90)",
+      "path": "gdlcot.html"
+    },
+    "sikw00fcot": {
+      "label": "SiK Telemetry (SiKW00FCOT)",
+      "path": "sikw00fcot.html"
+    },
+    "gutcheck": {
+      "label": "Tactical Discovery (GutCheck)",
+      "path": "gutcheck.html"
+    }
+  },
   "content-security-policy": "default-src 'self'; style-src 'self' 'unsafe-inline'"
 }

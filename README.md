@@ -12,6 +12,9 @@ DHCP-less Ethernet **MANET fallback (IPv4LL)** setting; DHCP remains preferred a
 the change waits for the next Ethernet activation so the current admin session is
 never deliberately disconnected.
 
+The package also adds focused management pages for ACARS, GDL90, SiK telemetry,
+and GutCheck. Each page provides service controls, state, configuration paths, and logs.
+
 ## Install
 
 Pre-installed on AryaOS; from the [snstac package repository](https://snstac.github.io/packages):

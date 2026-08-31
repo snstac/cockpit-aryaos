@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SiK Telemetry (SiKW00FCOT)</title><link rel="stylesheet" href="aryaos.css"><script src="../base1/cockpit.js"></script></head>
+<body data-gateway="sikw00fcot"><main class="aos-main"><h1 id="gateway-title">AryaOS Gateway</h1><p class="aos-sub">Manage the gateway service and review its logs.</p>
+<section class="aos-card"><h2>Service</h2><table class="aos-table"><tbody>
+<tr><th>Unit</th><td id="gateway-service"></td></tr><tr><th>State</th><td id="gateway-state">Loading...</td></tr>
+<tr><th>Enabled</th><td id="gateway-enabled">Loading...</td></tr><tr><th>Last result</th><td id="gateway-result">Loading...</td></tr>
+<tr><th>Restarts</th><td id="gateway-restarts">Loading...</td></tr><tr><th>Configuration</th><td><code id="gateway-config"></code></td></tr>
+</tbody></table><div class="aos-actions-inline"><button class="aos-btn" id="gateway-refresh">Refresh</button><button class="aos-btn aos-primary" data-action="start">Start</button><button class="aos-btn" data-action="restart">Restart</button><button class="aos-btn" data-action="stop">Stop</button><button class="aos-btn" data-action="enable">Enable and start</button><button class="aos-btn" data-action="disable">Disable and stop</button></div><span class="aos-status" id="gateway-action-status"></span></section>
+<section class="aos-card"><h2>Logs</h2><div class="aos-actions-inline"><button class="aos-btn" id="gateway-show-logs">Show recent logs</button><button class="aos-btn" id="gateway-follow-logs">Follow logs</button><button class="aos-btn" id="gateway-stop-logs">Stop following</button></div><pre class="aos-log-output" id="gateway-logs">Loading...</pre></section>
+</main><script src="gateway.js"></script></body></html>

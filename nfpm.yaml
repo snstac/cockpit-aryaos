@@ -27,7 +27,17 @@ contents:
     dst: /usr/share/cockpit/aryaos/aryaos.js
   - src: ./aryaos-basemap.js
     dst: /usr/share/cockpit/aryaos/aryaos-basemap.js
+  - src: ./gateway.js
+    dst: /usr/share/cockpit/aryaos/gateway.js
   - src: ./index.html
     dst: /usr/share/cockpit/aryaos/index.html
   - src: ./manifest.json
     dst: /usr/share/cockpit/aryaos/manifest.json
+  - src: ./acarscot.html
+    dst: /usr/share/cockpit/aryaos/acarscot.html
+  - src: ./gdlcot.html
+    dst: /usr/share/cockpit/aryaos/gdlcot.html
+  - src: ./sikw00fcot.html
+    dst: /usr/share/cockpit/aryaos/sikw00fcot.html
+  - src: ./gutcheck.html
+    dst: /usr/share/cockpit/aryaos/gutcheck.html
