@@ -10,6 +10,7 @@
   --aos-accent: #147a68;
   --aos-accent-dark: #0d5b4e;
   --aos-accent-ink: #ffffff;
+  --aos-brand: #c2520d;
   --aos-danger: #b42318;
   --aos-ok: #137a48;
 }
@@ -28,7 +29,7 @@ body {
 }
 
 .aos-main {
-  width: min(100%, 62rem);
+  width: min(100%, 72rem);
   margin: 0 auto;
   padding: clamp(1rem, 2vw, 1.75rem) clamp(1rem, 3vw, 2rem) 3rem;
 }
@@ -45,13 +46,86 @@ body {
   line-height: 1.55;
 }
 
+.aos-launcher {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.75rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.aos-launch-tile {
+  position: relative;
+  display: flex;
+  min-height: 9.5rem;
+  padding: 1.25rem 1rem 1rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  border: 2px solid var(--aos-border);
+  border-radius: 0;
+  background: var(--aos-panel);
+  color: var(--aos-ink);
+  text-align: center;
+  text-decoration: none;
+  transition: border-color 140ms, background 140ms;
+}
+
+.aos-launch-tile::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  background: var(--aos-brand);
+  content: "";
+}
+
+.aos-launch-tile:hover {
+  border-color: var(--aos-accent);
+  background: var(--aos-panel-2);
+}
+
+.aos-launch-tile:focus-visible,
+.aos-btn:focus-visible,
+.aos-icon-btn:focus-visible {
+  outline: 3px solid var(--aos-accent);
+  outline-offset: 3px;
+}
+
+.aos-launch-icon {
+  width: 2.65rem;
+  height: 2.65rem;
+  margin: auto 0 0.8rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 1.7;
+}
+
+.aos-launch-name {
+  margin-bottom: 0.25rem;
+  color: var(--aos-muted);
+  font-family: "Arial Narrow", "Roboto Condensed", sans-serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.aos-launch-value {
+  min-height: 1.2em;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
 .aos-card {
   margin: 1rem 0;
   padding: clamp(1rem, 2vw, 1.3rem);
   background: var(--aos-panel);
-  border: 1px solid var(--aos-border);
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+  border: 2px solid var(--aos-border);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .aos-card h2 {
@@ -116,9 +190,12 @@ body {
 .aos-btn {
   min-height: 3rem;
   padding: 0.7rem 1.2rem;
-  font-size: 1rem;
-  border: 1px solid var(--aos-accent);
-  border-radius: 5px;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 2px solid var(--aos-accent);
+  border-radius: 0;
   background: var(--aos-panel-2);
   color: var(--aos-accent-dark);
   cursor: pointer;
@@ -126,8 +203,19 @@ body {
 }
 
 .aos-btn.aos-primary {
+  border-color: var(--aos-brand);
+  background: var(--aos-brand);
+  color: var(--aos-accent-ink);
+}
+
+.aos-btn:not(:disabled):hover {
   background: var(--aos-accent);
   color: var(--aos-accent-ink);
+}
+
+.aos-btn.aos-primary:not(:disabled):hover {
+  background: var(--aos-brand);
+  filter: brightness(0.9);
 }
 
 .aos-btn.aos-btn-danger {
@@ -154,8 +242,8 @@ body {
 .aos-icon-btn {
   width: 3rem;
   height: 3rem;
-  border: 1px solid var(--aos-accent);
-  border-radius: 5px;
+  border: 2px solid var(--aos-accent);
+  border-radius: 0;
   background: var(--aos-panel-2);
   color: var(--aos-accent-dark);
   cursor: pointer;
@@ -513,6 +601,14 @@ body {
 }
 
 @media (max-width: 760px) {
+  .aos-launcher {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aos-launch-tile {
+    min-height: 8.5rem;
+  }
+
   .aos-card {
     margin-inline: -0.25rem;
   }

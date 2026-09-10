@@ -81,6 +81,28 @@ test("MANET fallback card uses the privileged AryaOS helper", () => {
     assert.match(source, /superuser: "require"/);
 });
 
+test("workflow launcher links to existing cards", () => {
+    const root = path.join(__dirname, "..");
+    const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+    const css = fs.readFileSync(path.join(root, "aryaos.css"), "utf8");
+    const targets = [
+        "card-role",
+        "card-dp",
+        "card-radios",
+        "card-radio-control",
+        "card-location",
+        "card-updates",
+    ];
+
+    assert.match(html, /class="aos-launcher"/);
+    for (const target of targets) {
+        assert.match(html, new RegExp(`href="#${target}"`));
+        assert.match(html, new RegExp(`id="${target}"`));
+    }
+    assert.match(css, /\.aos-launch-tile::before/);
+    assert.match(css, /height: 6px/);
+});
+
 test("site status uses the complete AryaOS health collector with a legacy fallback", () => {
     const source = fs.readFileSync(path.join(__dirname, "..", "aryaos.js"), "utf8");
     assert.match(source, /\["\/usr\/local\/sbin\/aryaos-health", "--json"\]/);
